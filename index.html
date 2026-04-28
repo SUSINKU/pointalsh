@@ -1,0 +1,1732 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PointALSH — Deux Moulins</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f4f1;--surface:#fff;--surface2:#f0eeea;--border:#e2dfd9;--border2:#ccc9c2;
+  --text:#1a1917;--text2:#6b6860;--text3:#9e9b95;
+  --accent:#2d6a4f;--al:#e8f5ee;--a2:#1b4332;
+  --danger:#c0392b;--dl:#fdf0ef;--warn:#b7791f;
+  --matin:#1d5fa8;--matl:#eef4fc;
+  --midi:#b7791f;--midl:#fef9ec;
+  --restau:#2d6a4f;--resl:#e8f5ee;
+  --soir:#6b46c1;--soirl:#f4f0fd;
+  --mer:#0e7490;--merl:#ecfeff;
+  --vac:#7c3aed;--vacl:#f5f3ff;
+  --r:10px;--rs:6px;--sh:0 1px 3px rgba(0,0,0,.08);--shm:0 4px 12px rgba(0,0,0,.1);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;}
+
+.sb{position:fixed;left:0;top:0;bottom:0;width:234px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:100;transition:transform .25s;}
+.sb-hd{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.sb-logo{width:32px;height:32px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.sb-logo svg{width:17px;height:17px;fill:white;}
+.sb-t{font-size:15px;font-weight:600;}.sb-s{font-size:11px;color:var(--text3);}
+.sb-nav{flex:1;padding:10px 8px;overflow-y:auto;}
+.sb-sec{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;padding:8px 8px 4px;}
+.ni{display:flex;align-items:center;gap:9px;padding:8px 8px;border-radius:6px;font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;transition:all .12s;border:none;background:none;width:100%;text-align:left;margin-bottom:1px;}
+.ni:hover{background:var(--surface2);color:var(--text);}
+.ni.act{background:var(--al);color:var(--a2);}
+.ni.cact{background:#f0fdfa;color:#0f766e;}
+/* CALENDRIER */
+.cal-year-nav{display:flex;align-items:center;gap:16px;margin-bottom:20px;}
+.cal-year-btn{background:none;border:1px solid var(--border2);border-radius:6px;padding:5px 12px;cursor:pointer;font-size:14px;font-weight:500;color:var(--text2);}
+.cal-year-btn:hover{background:var(--surface2);}
+.cal-year-label{font-size:20px;font-weight:600;letter-spacing:-0.5px;}
+.cal-legend{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px;font-size:12px;}
+.cal-leg-item{display:flex;align-items:center;gap:6px;}
+.cal-leg-dot{width:12px;height:12px;border-radius:3px;flex-shrink:0;}
+.cal-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+.cal-month{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:var(--sh);}
+.cal-month-hd{padding:9px 12px;border-bottom:1px solid var(--border);font-size:13px;font-weight:600;}
+.cal-month-body{padding:8px;}
+.cal-dow{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px;}
+.cal-dow-lbl{text-align:center;font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase;}
+.cal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+.cal-day{width:100%;aspect-ratio:1;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:500;cursor:default;position:relative;border:none;background:none;transition:transform .1s;}
+.cal-day:hover{transform:scale(1.2);z-index:2;}
+.cal-day.empty{cursor:default;}
+.cal-day.today{outline:2px solid var(--accent);outline-offset:1px;}
+/* Couleurs par type */
+.cal-day.peri{background:#dbeafe;color:#1e40af;}
+.cal-day.mer{background:#cffafe;color:#164e63;}
+.cal-day.vac{background:#ede9fe;color:#4c1d95;}
+.cal-day.multi{background:linear-gradient(135deg,#dbeafe 50%,#ede9fe 50%);color:#1e40af;}
+.cal-day.no-data{background:var(--surface2);color:var(--text3);}
+/* Popup détail */
+.cal-popup{position:fixed;z-index:300;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shm);padding:14px 16px;min-width:200px;max-width:280px;font-size:13px;}
+.cal-popup-t{font-weight:600;margin-bottom:8px;font-size:14px;}
+.cal-popup-row{display:flex;justify-content:space-between;gap:12px;margin-bottom:4px;}
+.cal-popup-lbl{color:var(--text2);}
+.cal-popup-val{font-weight:500;font-family:'DM Mono',monospace;}
+@media(max-width:768px){.cal-grid{grid-template-columns:repeat(2,1fr);}}
+.nb{margin-left:auto;background:var(--surface2);color:var(--text3);font-size:11px;padding:1px 6px;border-radius:10px;font-family:'DM Mono',monospace;}
+.ni.act .nb{background:var(--a2);color:white;}
+.ni.mact .nb{background:var(--mer);color:white;}
+.sb-ft{padding:12px 8px;border-top:1px solid var(--border);}
+.u-chip{display:flex;align-items:center;gap:8px;padding:6px 8px;}
+.u-av{width:28px;height:28px;border-radius:50%;background:var(--al);color:var(--a2);font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;}
+.u-name{font-size:13px;font-weight:500;}.u-role{font-size:11px;color:var(--text3);}
+.sb-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:99;}
+
+.main{margin-left:234px;min-height:100vh;}
+.topbar{position:sticky;top:0;z-index:50;background:var(--bg);border-bottom:1px solid var(--border);padding:0 22px;height:52px;display:flex;align-items:center;gap:12px;}
+.tb-title{font-size:15px;font-weight:600;flex:1;}
+.burger{display:none;background:none;border:none;cursor:pointer;padding:6px;}
+.burger svg{width:20px;height:20px;}
+.pc{padding:20px;}
+
+.mode-bar{display:flex;align-items:center;gap:10px;margin-bottom:16px;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:500;}
+.mode-p{background:var(--al);color:var(--a2);border:1px solid #b7e4c7;}
+.mode-m{background:var(--merl);color:var(--mer);border:1px solid #a5f3fc;}
+.mode-v{background:var(--vacl);color:var(--vac);border:1px solid #ddd6fe;}
+.mode-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+
+.date-tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;}
+.dt{padding:5px 14px;border-radius:20px;border:1px solid var(--border2);background:var(--surface);font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;transition:all .12s;}
+.dt:hover{border-color:var(--accent);color:var(--accent);}
+.dt.act{background:var(--accent);border-color:var(--accent);color:white;}
+.dt.mer{border-color:var(--mer);color:var(--mer);}
+.dt.mer.act{background:var(--mer);color:white;}
+
+.tabs{display:flex;gap:2px;background:var(--surface2);padding:4px;border-radius:8px;margin-bottom:14px;flex-wrap:wrap;}
+.tab{flex:1;min-width:60px;padding:6px 8px;border-radius:6px;border:none;background:none;font-family:inherit;font-size:12px;font-weight:500;color:var(--text2);cursor:pointer;transition:all .12s;white-space:nowrap;display:flex;align-items:center;gap:4px;justify-content:center;}
+.tab:hover{color:var(--text);}
+.tab.act{background:var(--surface);color:var(--text);box-shadow:var(--sh);}
+.tc{font-size:11px;font-family:'DM Mono',monospace;background:var(--surface2);padding:1px 5px;border-radius:8px;}
+.tab.act .tc{background:var(--al);color:var(--a2);}
+
+/* Onglets groupe mercredi */
+.grp-tabs{display:flex;gap:8px;margin-bottom:14px;}
+.grp-tab{padding:7px 20px;border-radius:8px;border:2px solid var(--border2);background:var(--surface);font-size:13px;font-weight:600;cursor:pointer;transition:all .12s;color:var(--text2);}
+.grp-tab:hover{border-color:var(--mer);color:var(--mer);}
+.grp-tab.act{background:var(--mer);border-color:var(--mer);color:white;}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden;margin-bottom:14px;}
+.card-hd{padding:13px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+.card-t{font-size:14px;font-weight:600;}.card-sub{font-size:12px;color:var(--text3);margin-top:2px;}
+.card-act{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+table{width:100%;border-collapse:collapse;}
+thead th{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;padding:9px 12px;text-align:left;background:var(--surface2);border-bottom:1px solid var(--border);white-space:nowrap;}
+td{padding:9px 12px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tbody tr:hover td{background:#faf9f7;}
+.cc{text-align:center;padding:9px 6px;}
+.nc{font-weight:500;white-space:nowrap;}
+.cl-sep td{padding:5px 14px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;border-bottom:1px solid var(--border);}
+
+.pck{width:22px;height:22px;border-radius:5px;border:2px solid var(--border2);cursor:pointer;appearance:none;-webkit-appearance:none;transition:all .12s;position:relative;display:inline-block;vertical-align:middle;}
+.pck.m:checked{background:var(--matin);border-color:var(--matin);}
+.pck.mi:checked{background:var(--midi);border-color:var(--midi);}
+.pck.r:checked{background:var(--restau);border-color:var(--restau);}
+.pck.s:checked{background:var(--soir);border-color:var(--soir);}
+.pck:checked::after{content:'';position:absolute;left:5px;top:2px;width:6px;height:10px;border:2px solid white;border-top:none;border-left:none;transform:rotate(45deg);}
+.abs-b{display:inline-block;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600;background:var(--dl);color:var(--danger);font-family:'DM Mono',monospace;}
+.tri{width:36px;height:24px;border-radius:5px;border:2px solid var(--border2);cursor:pointer;font-size:10px;font-weight:700;background:var(--surface);color:var(--text3);display:inline-flex;align-items:center;justify-content:center;transition:all .12s;font-family:'DM Mono',monospace;}
+.tri.pres.m{background:var(--matin);border-color:var(--matin);color:white;}
+.tri.pres.mi{background:var(--midi);border-color:var(--midi);color:white;}
+.tri.pres.r{background:var(--restau);border-color:var(--restau);color:white;}
+.tri.pres.s{background:var(--soir);border-color:var(--soir);color:white;}
+.tri.abs{background:var(--danger);border-color:var(--danger);color:white;}
+
+/* Champ horaire mercredi */
+.h-inp{width:56px;padding:4px 6px;border:1px solid var(--border2);border-radius:4px;font-family:'DM Mono',monospace;font-size:12px;text-align:center;background:var(--surface);outline:none;color:var(--text);}
+.h-inp:focus{border-color:var(--mer);background:var(--merl);}
+.h-inp.v{border-color:var(--mer);background:var(--merl);color:var(--mer);font-weight:500;}
+
+.stats-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
+.sc{display:flex;align-items:center;gap:7px;padding:7px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:13px;}
+.sd{width:8px;height:8px;border-radius:50%;}
+.sv{font-weight:600;font-family:'DM Mono',monospace;}
+.sl{color:var(--text2);}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:7px 13px;border-radius:6px;font-family:inherit;font-size:13px;font-weight:500;border:none;cursor:pointer;transition:all .12s;white-space:nowrap;}
+.btn-p{background:var(--accent);color:white;}.btn-p:hover{background:var(--a2);}
+.btn-m{background:var(--mer);color:white;}.btn-m:hover{opacity:.88;}
+.btn-g{background:transparent;color:var(--text2);border:1px solid var(--border2);}.btn-g:hover{background:var(--surface2);}
+.btn-warn{background:var(--warn);color:white;}.btn-warn:hover{opacity:.88;}
+.btn-sm{padding:5px 10px;font-size:12px;}
+
+.sw{position:relative;}
+.sw svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);width:14px;height:14px;stroke:var(--text3);pointer-events:none;}
+.si{padding:7px 12px 7px 30px;border:1px solid var(--border2);border-radius:6px;font-family:inherit;font-size:13px;background:var(--surface);outline:none;width:190px;transition:all .15s;color:var(--text);}
+.si:focus{border-color:var(--accent);width:230px;}
+
+.pill{display:inline-block;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:500;background:var(--surface2);color:var(--text2);white-space:nowrap;}
+
+.import-zone{padding:14px 18px;border-top:1px solid var(--border);}
+.import-ta{width:100%;height:100px;padding:10px;border:1px solid var(--border2);border-radius:6px;font-family:'DM Mono',monospace;font-size:12px;resize:vertical;outline:none;color:var(--text);background:var(--surface2);}
+.import-ta:focus{border-color:var(--accent);}
+
+.caf-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px;}
+.caf-card{padding:16px;border-radius:8px;border:1px solid var(--border);}
+.caf-val{font-size:24px;font-weight:700;font-family:'DM Mono',monospace;margin-bottom:2px;}
+.caf-lbl{font-size:12px;color:var(--text2);}
+
+/* MODAL MODIFIER */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;align-items:center;justify-content:center;padding:20px;}
+.modal-bg.open{display:flex;}
+.modal{background:var(--surface);border-radius:var(--r);box-shadow:var(--shm);width:100%;max-width:440px;max-height:90vh;overflow-y:auto;}
+.modal-hd{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.modal-t{font-size:15px;font-weight:600;}
+.modal-close{background:none;border:none;cursor:pointer;padding:4px;color:var(--text2);font-size:20px;line-height:1;}
+.modal-body{padding:20px;}
+.form-row{margin-bottom:14px;}
+.form-lbl{display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:5px;}
+.form-inp{width:100%;padding:8px 12px;border:1px solid var(--border2);border-radius:6px;font-family:inherit;font-size:14px;outline:none;color:var(--text);background:var(--surface);}
+.form-inp:focus{border-color:var(--accent);}
+.form-select{width:100%;padding:8px 12px;border:1px solid var(--border2);border-radius:6px;font-family:inherit;font-size:14px;outline:none;color:var(--text);background:var(--surface);cursor:pointer;}
+.modal-ft{padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;}
+
+.toast-w{position:fixed;top:14px;right:14px;z-index:9999;display:flex;flex-direction:column;gap:6px;pointer-events:none;}
+.toast{background:var(--a2);color:white;padding:10px 14px;border-radius:6px;font-size:13px;font-weight:500;box-shadow:var(--shm);opacity:0;transform:translateX(16px);transition:all .2s;pointer-events:auto;max-width:270px;}
+.toast.show{opacity:1;transform:translateX(0);}
+.toast.err{background:var(--danger);}.toast.warn{background:var(--warn);}
+
+.cm{color:var(--matin);}.cmi{color:var(--midi);}.cr{color:var(--restau);}.cs{color:var(--soir);}.cmer{color:var(--mer);}
+.view{display:none;}.view.active{display:block;}
+
+@media(max-width:768px){
+  .sb{transform:translateX(-100%);}
+  .sb.open{transform:translateX(0);}
+  .sb-ov.show{display:block;}
+  .main{margin-left:0;}
+  .burger{display:flex;}
+  .pc{padding:12px;}
+  .si{width:150px;}.si:focus{width:170px;}
+  .caf-grid{grid-template-columns:repeat(2,1fr);}
+  .grp-tabs{flex-wrap:wrap;}
+}
+</style>
+</head>
+<body>
+
+<div class="toast-w" id="toasts"></div>
+<div class="sb-ov" id="ov" onclick="closeSB()"></div>
+
+<!-- MODAL MODIFIER -->
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-hd">
+      <div class="modal-t" id="modal-title">Modifier un enfant</div>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="modal-mode">
+      <input type="hidden" id="modal-nom-orig">
+      <div class="form-row">
+        <label class="form-lbl">Nom complet</label>
+        <input class="form-inp" id="modal-nom" placeholder="DUPONT Marie">
+      </div>
+      <div class="form-row" id="modal-cl-row">
+        <label class="form-lbl">Classe</label>
+        <select class="form-select" id="modal-cl">
+          <option value="PS">PS</option>
+          <option value="MS/GS">MS/GS</option>
+          <option value="CP">CP</option>
+          <option value="CE1/CE2">CE1/CE2</option>
+          <option value="CE2/CM1">CE2/CM1</option>
+          <option value="CM1/CM2">CM1/CM2</option>
+        </select>
+      </div>
+      <div class="form-row" id="modal-grp-row" style="display:none">
+        <label class="form-lbl">Groupe mercredi</label>
+        <select class="form-select" id="modal-grp">
+          <option value="plus6">+6 ans</option>
+          <option value="moins6">-6 ans</option>
+        </select>
+      </div>
+      <div id="modal-delete-row" style="display:none;margin-top:8px;">
+        <button class="btn btn-warn btn-sm" onclick="deleteEnfant()">Supprimer cet enfant</button>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-g btn-sm" onclick="closeModal()">Annuler</button>
+      <button class="btn btn-p btn-sm" id="modal-save-btn" onclick="saveModal()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<aside class="sb" id="sb">
+  <div class="sb-hd">
+    <div class="sb-logo"><svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg></div>
+    <div><div class="sb-t">PointALSH</div><div class="sb-s">Deux Moulins</div></div>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-sec">Vue générale</div>
+    <button class="ni" id="ni-cal" onclick="showView('calendrier',this)" style="color:#0f766e">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Calendrier annuel
+    </button>
+    <div class="sb-sec" style="margin-top:6px">Périscolaire</div>
+    <button class="ni act" id="ni-pt" onclick="showView('periscolaire',this)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+      Pointage semaine
+    </button>
+    <button class="ni" id="ni-rc" onclick="showView('recap-peri',this)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Récapitulatif
+    </button>
+    <div class="sb-sec" style="margin-top:6px">Mercredi ALSH</div>
+    <button class="ni" id="ni-mer" onclick="showView('mercredi',this)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Pointage mercredi
+    </button>
+    <button class="ni" id="ni-rcm" onclick="showView('recap-mer',this)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Récapitulatif
+    </button>
+    <div class="sb-sec" style="margin-top:6px">Vacances scolaires</div>
+    <button class="ni" id="ni-vac" onclick="showView('vacances',this)" style="color:var(--vac)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 17l9-13 9 13H3z"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+      Pointage vacances
+    </button>
+    <button class="ni" id="ni-rcv" onclick="showView('recap-vac',this)" style="color:var(--vac)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Récapitulatif
+    </button>
+    <div class="sb-sec" style="margin-top:6px">Classes périscolaire</div>
+    <button class="ni" onclick="jumpClass('PS')">PS <span class="nb" id="nb-PS">15</span></button>
+    <button class="ni" onclick="jumpClass('MS/GS')">MS/GS <span class="nb" id="nb-MSGS">20</span></button>
+    <button class="ni" onclick="jumpClass('CP')">CP <span class="nb" id="nb-CP">16</span></button>
+    <button class="ni" onclick="jumpClass('CE1/CE2')">CE1/CE2 <span class="nb" id="nb-CE1CE2">15</span></button>
+    <button class="ni" onclick="jumpClass('CE2/CM1')">CE2/CM1 <span class="nb" id="nb-CE2CM1">18</span></button>
+    <button class="ni" onclick="jumpClass('CM1/CM2')">CM1/CM2 <span class="nb" id="nb-CM1CM2">16</span></button>
+  </nav>
+  <div class="sb-ft">
+    <div class="u-chip">
+      <div class="u-av">AD</div>
+      <div><div class="u-name">Adrien</div><div class="u-role">Administrateur</div></div>
+    </div>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <button class="burger" onclick="openSB()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <div class="tb-title" id="tb-title">Pointage périscolaire</div>
+  </div>
+
+  <div class="pc">
+
+    <!-- ===== PÉRISCOLAIRE ===== -->
+    <div class="view active" id="view-periscolaire">
+      <div class="mode-bar mode-p"><div class="mode-dot" style="background:var(--accent)"></div>Périscolaire — Matin · Midi · Restauration · Soir</div>
+      <div class="date-tabs" id="peri-date-tabs"></div>
+      <div class="tabs" id="class-tabs">
+        <button class="tab act" onclick="selectClassTab('Toutes',this)">Toutes <span class="tc" id="tc-all">—</span></button>
+        <button class="tab" onclick="selectClassTab('PS',this)">PS</button>
+        <button class="tab" onclick="selectClassTab('MS/GS',this)">MS/GS</button>
+        <button class="tab" onclick="selectClassTab('CP',this)">CP</button>
+        <button class="tab" onclick="selectClassTab('CE1/CE2',this)">CE1/CE2</button>
+        <button class="tab" onclick="selectClassTab('CE2/CM1',this)">CE2/CM1</button>
+        <button class="tab" onclick="selectClassTab('CM1/CM2',this)">CM1/CM2</button>
+      </div>
+      <div class="stats-bar" id="peri-stats"></div>
+      <div class="card">
+        <div class="card-hd">
+          <div><div class="card-t" id="peri-table-title">Toutes les classes</div><div class="card-sub" id="peri-table-sub"></div></div>
+          <div class="card-act">
+            <button class="btn btn-g btn-sm" onclick="openModalAdd('peri')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Ajouter
+            </button>
+            <div class="sw">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input class="si" placeholder="Rechercher…" oninput="searchPeri(this.value)">
+            </div>
+            <button class="btn btn-p btn-sm" onclick="savePeri()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
+              Enregistrer
+            </button>
+          </div>
+        </div>
+        <div class="tw">
+          <table>
+            <thead><tr><th>Nom</th><th>Classe</th><th class="cc cm">Matin</th><th class="cc cmi">Midi</th><th class="cc cr">Restau.</th><th class="cc cs">Soir</th><th></th></tr></thead>
+            <tbody id="peri-tbody"></tbody>
+            <tfoot id="peri-tfoot"></tfoot>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hd" style="cursor:pointer" onclick="toggleZ('peri-import','ch-pi')">
+          <div><div class="card-t">Import JSON — nouvelle semaine</div><div class="card-sub">Colle le JSON fourni par Claude après scan des feuilles</div></div>
+          <svg id="ch-pi" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="transition:transform .2s;flex-shrink:0"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div id="peri-import" style="display:none" class="import-zone">
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:12px 14px;margin-bottom:10px;">
+            <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:6px">Prompt à envoyer à Claude avec la photo :</div>
+            <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text);line-height:1.6;user-select:all" id="prompt-peri"></div>
+            <button class="btn btn-g btn-sm" style="margin-top:8px" onclick="copyPrompt('peri')">Copier le prompt</button>
+          </div>
+          <textarea class="import-ta" id="peri-json" placeholder='{"semaine":"S19 — 5 au 9 mai","enfants":[{"nom":"BURLAT Mylan","cl":"CP","05/05":{"m":true,"mi":true,"r":true,"s":false}}]}'></textarea>
+          <div style="display:flex;gap:8px;margin-top:10px;align-items:center;">
+            <button class="btn btn-p btn-sm" onclick="importPeri()">Importer</button>
+            <button class="btn btn-g btn-sm" onclick="document.getElementById('peri-json').value=''">Vider</button>
+            <span style="font-size:12px;color:var(--text3)">Noms connus → mis à jour · Nouveaux → ajoutés</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== MERCREDI ===== -->
+    <div class="view" id="view-mercredi">
+      <div class="mode-bar mode-m"><div class="mode-dot" style="background:var(--mer)"></div>Mercredi ALSH — ALSH Matin · ALSH Journée · ALSH Restauration · ALSH Après-midi</div>
+
+      <div class="date-tabs" id="mer-date-tabs"></div>
+
+      <!-- Onglets -6 / +6 -->
+      <div class="grp-tabs">
+        <button class="grp-tab act" id="grp-moins6" onclick="selectGrp('moins6',this)">-6 ans</button>
+        <button class="grp-tab" id="grp-plus6" onclick="selectGrp('plus6',this)">+6 ans</button>
+      </div>
+
+      <div class="stats-bar" id="mer-stats"></div>
+
+      <div class="card">
+        <div class="card-hd">
+          <div><div class="card-t" id="mer-table-title">Mercredi ALSH — +6 ans</div><div class="card-sub" id="mer-table-sub"></div></div>
+          <div class="card-act">
+            <button class="btn btn-g btn-sm" onclick="openModalAdd('mer')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Ajouter
+            </button>
+            <div class="sw">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input class="si" placeholder="Rechercher…" oninput="searchMer(this.value)">
+            </div>
+            <button class="btn btn-m btn-sm" onclick="saveMer()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
+              Enregistrer
+            </button>
+          </div>
+        </div>
+        <div class="tw">
+          <table>
+            <thead><tr>
+              <th>Nom</th>
+              <th class="cc cm">ALSH Matin</th>
+              <th class="cc cmer">ALSH Journée</th>
+              <th class="cc cr">ALSH Restau.</th>
+              <th class="cc cs">ALSH Après-midi</th>
+              <th></th>
+            </tr></thead>
+            <tbody id="mer-tbody"></tbody>
+            <tfoot id="mer-tfoot"></tfoot>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-hd" style="cursor:pointer" onclick="toggleZ('mer-import','ch-mi')">
+          <div><div class="card-t" style="color:var(--mer)">Import JSON — nouveau mercredi</div><div class="card-sub">Colle le JSON fourni par Claude après scan de la feuille mercredi</div></div>
+          <svg id="ch-mi" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="transition:transform .2s;flex-shrink:0"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div id="mer-import" style="display:none" class="import-zone">
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:12px 14px;margin-bottom:10px;">
+            <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:6px">Prompt à envoyer à Claude avec la photo :</div>
+            <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text);line-height:1.6;user-select:all" id="prompt-mer"></div>
+            <button class="btn btn-g btn-sm" style="margin-top:8px" onclick="copyPrompt('mer')">Copier le prompt</button>
+          </div>
+          <textarea class="import-ta" id="mer-json" placeholder='{"semaine":"Mercredi 25/03/2026","groupe":"moins6","enfants":[{"nom":"GROSSELIN Gabin","25/03":{"matin":"7h50","journee":"","restau":"13h30","apmidi":""}}]}'></textarea>
+          <div style="display:flex;gap:8px;margin-top:10px;align-items:center;">
+            <button class="btn btn-m btn-sm" onclick="importMer()">Importer</button>
+            <button class="btn btn-g btn-sm" onclick="document.getElementById('mer-json').value=''">Vider</button>
+            <span style="font-size:12px;color:var(--text3)">Noms connus → mis à jour · Nouveaux → ajoutés</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== RÉCAP PÉRI ===== -->
+    <div class="view" id="view-recap-peri">
+      <div class="card">
+        <div class="card-hd">
+          <div><div class="card-t">Récapitulatif périscolaire</div><div class="card-sub" id="recap-peri-period"></div></div>
+          <button class="btn btn-p btn-sm" onclick="exportCAF()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export CAF
+          </button>
+        </div>
+        <div class="tw"><table id="recap-peri-table">
+          <thead><tr><th>Classe</th><th>Élèves</th></tr></thead>
+          <tbody id="recap-peri-tbody"></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- ===== RÉCAP MERCREDI ===== -->
+    <div class="view" id="view-recap-mer">
+      <div class="caf-grid" id="mer-caf-grid"></div>
+      <div class="card">
+        <div class="card-hd">
+          <div><div class="card-t">Détail par enfant — Mercredis ALSH</div><div class="card-sub" id="mer-recap-sub"></div></div>
+          <button class="btn btn-m btn-sm" onclick="exportCAF()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export CAF
+          </button>
+        </div>
+        <div class="grp-tabs" style="padding:12px 18px 0">
+          <button class="grp-tab act" id="rgrp-moins6" onclick="selectRecapGrp('moins6',this)">-6 ans</button>
+          <button class="grp-tab" id="rgrp-plus6" onclick="selectRecapGrp('plus6',this)">+6 ans</button>
+        </div>
+        <div class="tw"><table>
+          <thead><tr><th>Nom</th><th id="mer-recap-dates"></th></tr></thead>
+          <tbody id="mer-recap-tbody"></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- ===== VACANCES ===== -->
+    <div class="view" id="view-vacances">
+      <div class="mode-bar mode-v"><div class="mode-dot" style="background:var(--vac)"></div>Vacances scolaires — ALSH Matin · ALSH Journée · ALSH Restauration · ALSH Après-midi</div>
+      <div class="date-tabs" id="vac-date-tabs"></div>
+      <div class="grp-tabs">
+        <button class="grp-tab act" id="vgrp-moins6" onclick="selectVacGrp('moins6',this)">-6 ans</button>
+        <button class="grp-tab" id="vgrp-plus6" onclick="selectVacGrp('plus6',this)">+6 ans</button>
+      </div>
+      <div class="stats-bar" id="vac-stats"></div>
+      <div class="card">
+        <div class="card-hd">
+          <div><div class="card-t" id="vac-table-title">Vacances ALSH</div><div class="card-sub" id="vac-table-sub"></div></div>
+          <div class="card-act">
+            <button class="btn btn-g btn-sm" onclick="openModalAdd('vac')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Ajouter
+            </button>
+            <div class="sw">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input class="si" placeholder="Rechercher…" oninput="searchVac(this.value)">
+            </div>
+            <button class="btn btn-sm" style="background:var(--vac);color:white" onclick="saveVac()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
+              Enregistrer
+            </button>
+          </div>
+        </div>
+        <div class="tw">
+          <table>
+            <thead><tr>
+              <th>Nom</th>
+              <th class="cc cm">ALSH Matin</th>
+              <th class="cc cmer">ALSH Journée</th>
+              <th class="cc cr">ALSH Restau.</th>
+              <th class="cc cs">ALSH Après-midi</th>
+              <th></th>
+            </tr></thead>
+            <tbody id="vac-tbody"></tbody>
+            <tfoot id="vac-tfoot"></tfoot>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hd" style="cursor:pointer" onclick="toggleZ('vac-import','ch-vi')">
+          <div><div class="card-t" style="color:var(--vac)">Import JSON — nouvelles vacances</div><div class="card-sub">Colle le JSON fourni par Claude après scan</div></div>
+          <svg id="ch-vi" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="transition:transform .2s;flex-shrink:0"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div id="vac-import" style="display:none" class="import-zone">
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:12px 14px;margin-bottom:10px;">
+            <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:6px">Prompt à envoyer à Claude avec la photo :</div>
+            <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text);line-height:1.6;user-select:all" id="prompt-vac"></div>
+            <button class="btn btn-g btn-sm" style="margin-top:8px" onclick="copyPrompt('vac')">Copier le prompt</button>
+          </div>
+          <textarea class="import-ta" id="vac-json" placeholder='{"periode":"Vacances Toussaint 2026","groupe":"moins6","enfants":[{"nom":"BURLAT Mylan","26/10":{"matin":"","journee":"8h30","restau":"17h00","apmidi":""}}]}'></textarea>
+          <div style="display:flex;gap:8px;margin-top:10px;align-items:center;">
+            <button class="btn btn-sm" style="background:var(--vac);color:white" onclick="importVac()">Importer</button>
+            <button class="btn btn-g btn-sm" onclick="document.getElementById('vac-json').value=''">Vider</button>
+            <span style="font-size:12px;color:var(--text3)">Noms connus → mis à jour · Nouveaux → ajoutés</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== RÉCAP VACANCES ===== -->
+    <div class="view" id="view-recap-vac">
+      <div class="caf-grid" id="vac-caf-grid"></div>
+      <div class="card">
+        <div class="card-hd">
+          <div><div class="card-t">Détail par enfant — Vacances ALSH</div><div class="card-sub" id="vac-recap-sub"></div></div>
+          <button class="btn btn-sm" style="background:var(--vac);color:white" onclick="exportCAF()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export CAF
+          </button>
+        </div>
+        <div class="grp-tabs" style="padding:12px 18px 0">
+          <button class="grp-tab act" id="rvgrp-moins6" onclick="selectRecapVacGrp('moins6',this)">-6 ans</button>
+          <button class="grp-tab" id="rvgrp-plus6" onclick="selectRecapVacGrp('plus6',this)">+6 ans</button>
+        </div>
+        <div class="tw"><table>
+          <thead><tr><th>Nom</th><th id="vac-recap-dates"></th></tr></thead>
+          <tbody id="vac-recap-tbody"></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    </div>
+
+    <!-- ===== CALENDRIER ===== -->
+    <div class="view" id="view-calendrier">
+      <div class="cal-year-nav">
+        <button class="cal-year-btn" onclick="changeCalYear(-1)">←</button>
+        <span class="cal-year-label" id="cal-year-label">2026</span>
+        <button class="cal-year-btn" onclick="changeCalYear(1)">→</button>
+      </div>
+      <div class="cal-legend">
+        <div class="cal-leg-item"><div class="cal-leg-dot" style="background:#dbeafe"></div><span>Périscolaire</span></div>
+        <div class="cal-leg-item"><div class="cal-leg-dot" style="background:#cffafe"></div><span>Mercredi ALSH</span></div>
+        <div class="cal-leg-item"><div class="cal-leg-dot" style="background:#ede9fe"></div><span>Vacances ALSH</span></div>
+        <div class="cal-leg-item"><div class="cal-leg-dot" style="background:linear-gradient(135deg,#dbeafe 50%,#ede9fe 50%)"></div><span>Plusieurs types</span></div>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+      <div id="cal-popup" class="cal-popup" style="display:none" onclick="closeCalPopup()"></div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+const CLASS_ORDER=['PS','MS/GS','CP','CE1/CE2','CE2/CM1','CM1/CM2'];
+const CLASS_COLOR={'PS':'#7c3aed','MS/GS':'#1d4ed8','CP':'#059669','CE1/CE2':'#b45309','CE2/CM1':'#c2410c','CM1/CM2':'#6b21a8'};
+
+// ============================================================
+// DONNÉES PÉRISCOLAIRES
+// ============================================================
+let PERI=[
+  {nom:"BERNARDON Lily-Rose",cl:"PS","27/04":{m:false,mi:true,r:true,s:false},"28/04":{m:false,mi:false,r:false,s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"CARLIER Lilou",cl:"PS","27/04":{m:false,mi:true,r:true,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"DECELLE Albane",cl:"PS","27/04":{m:false,mi:true,r:true,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"DELIMANGE Anaé",cl:"PS","27/04":{m:true,mi:true,r:'abs',s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"FRANZETTI Maé",cl:"PS","27/04":{m:true,mi:true,r:true,s:false},"28/04":{m:false,mi:false,r:false,s:false},"30/04":{m:true,mi:true,r:true,s:true}},
+  {nom:"GUYOT Romane",cl:"PS","27/04":{m:false,mi:true,r:true,s:false},"28/04":{m:false,mi:true,r:true,s:true},"30/04":{m:false,mi:true,r:true,s:true}},
+  {nom:"HURTAUX Maël",cl:"PS","27/04":{m:false,mi:true,r:'abs',s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"MALVOISIN Léon",cl:"PS","27/04":{m:false,mi:true,r:true,s:false},"28/04":{m:false,mi:true,r:'abs',s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"MARANGÉ Olivia",cl:"PS","27/04":{m:false,mi:true,r:true,s:true},"28/04":{m:false,mi:true,r:true,s:true},"30/04":{m:false,mi:true,r:true,s:true}},
+  {nom:"MARCHAL Julia Louis",cl:"PS","27/04":{m:false,mi:true,r:true,s:true},"28/04":{m:false,mi:true,r:true,s:true},"30/04":{m:false,mi:true,r:true,s:true}},
+  {nom:"MISMAC Aimée",cl:"PS","27/04":{m:false,mi:true,r:true,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"NEVES Jules",cl:"PS","27/04":{m:true,mi:true,r:true,s:false},"28/04":{m:true,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"PATRIGEON Léandre",cl:"PS","27/04":{m:true,mi:true,r:true,s:false},"28/04":{m:true,mi:true,r:true,s:false},"30/04":{m:true,mi:true,r:true,s:false}},
+  {nom:"SEQUEVAL Lucie",cl:"PS","27/04":{m:false,mi:true,r:true,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:false,r:false,s:false}},
+  {nom:"VILLEMINOT Léonie",cl:"PS","27/04":{m:false,mi:true,r:true,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:true}},
+  {nom:"ALCEGAIRE Beloan",cl:"MS/GS","27/04":{m:false,mi:true,r:true,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"ATANSO Emmanuel",cl:"MS/GS","27/04":{m:true,mi:true,r:true,s:true},"28/04":{m:true,mi:true,r:true,s:true},"30/04":{m:false,mi:true,r:true,s:true}},
+  {nom:"BALLETTI Estelle",cl:"MS/GS","27/04":{m:false,mi:true,r:true,s:false},"28/04":{m:false,mi:true,r:true,s:true},"30/04":{m:false,mi:true,r:true,s:true}},
+  {nom:"BARTHELEMY Timoté",cl:"MS/GS","27/04":{m:false,mi:true,r:true,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"BERRARD ROUSSEL Raphaël",cl:"MS/GS","27/04":{m:false,mi:true,r:true,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:true}},
+  {nom:"BOURIANES MISTRI Axel",cl:"MS/GS","27/04":{m:false,mi:true,r:true,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"BRISSON Léa",cl:"MS/GS","27/04":{m:false,mi:true,r:true,s:true},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"CHASSAGNEUX Rose",cl:"MS/GS","27/04":{m:false,mi:true,r:true,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"CHITA Noah",cl:"MS/GS","27/04":{m:false,mi:true,r:true,s:'abs'},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"CLET Enaël",cl:"MS/GS","27/04":{m:false,mi:true,r:true,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"COSTAUX BRUGNON Hugo",cl:"MS/GS","27/04":{m:false,mi:true,r:true,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:false,r:false,s:false}},
+  {nom:"DEJARDIN Emma",cl:"MS/GS","27/04":{m:false,mi:true,r:true,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"FREGNAUX Nina",cl:"MS/GS","27/04":{m:false,mi:true,r:true,s:false},"28/04":{m:true,mi:true,r:true,s:true},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"FUCHS Mathis",cl:"MS/GS","27/04":{m:false,mi:false,r:false,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:true}},
+  {nom:"GEORGIN Callie",cl:"MS/GS","27/04":{m:false,mi:true,r:true,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:false,r:false,s:false}},
+  {nom:"LARDENOIS Apolline",cl:"MS/GS","27/04":{m:false,mi:true,r:true,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:true}},
+  {nom:"LERAILLEY LEGRAND Morgane",cl:"MS/GS","27/04":{m:false,mi:true,r:true,s:false},"28/04":{m:false,mi:true,r:false,s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"MIANDY Kayden",cl:"MS/GS","27/04":{m:false,mi:true,r:true,s:'abs'},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:true}},
+  {nom:"MOAL Alix",cl:"MS/GS","27/04":{m:false,mi:true,r:true,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:true}},
+  {nom:"RASSELET Jeanne",cl:"MS/GS","27/04":{m:false,mi:true,r:true,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:true}},
+  {nom:"BERTILI-LAUTREFIN Kaïly",cl:"CP","27/04":{m:false,mi:true,r:false,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"BURLAT Mylan",cl:"CP","27/04":{m:true,mi:true,r:true,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:true,mi:true,r:true,s:false}},
+  {nom:"CARLIER Alice",cl:"CP","27/04":{m:false,mi:true,r:true,s:true},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"KOENIG Paul",cl:"CP","27/04":{m:false,mi:false,r:false,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:true}},
+  {nom:"LAGUERRE Eliott",cl:"CP","27/04":{m:false,mi:true,r:true,s:true},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:true}},
+  {nom:"LALLEMENT Enoha",cl:"CP","27/04":{m:false,mi:false,r:false,s:false},"28/04":{m:false,mi:false,r:false,s:false},"30/04":{m:false,mi:true,r:true,s:true}},
+  {nom:"MARANGÉ Nina",cl:"CP","27/04":{m:false,mi:true,r:true,s:true},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:true}},
+  {nom:"NEVES Elina",cl:"CP","27/04":{m:true,mi:true,r:true,s:true},"28/04":{m:true,mi:true,r:true,s:true},"30/04":{m:false,mi:false,r:false,s:false}},
+  {nom:"PANOT Livia",cl:"CP","27/04":{m:false,mi:true,r:true,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"PATRIGEON Augustin",cl:"CP","27/04":{m:true,mi:true,r:true,s:false},"28/04":{m:true,mi:true,r:true,s:false},"30/04":{m:true,mi:true,r:true,s:false}},
+  {nom:"PICCOLI Ylan",cl:"CP","27/04":{m:false,mi:true,r:true,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"SEQUEVAL Emma",cl:"CP","27/04":{m:false,mi:true,r:true,s:false},"28/04":{m:true,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"STIOT Léo",cl:"CP","27/04":{m:false,mi:true,r:true,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"TONDA NGWENDJA Ilyana",cl:"CP","27/04":{m:false,mi:true,r:true,s:true},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:true}},
+  {nom:"VACHER Priam",cl:"CP","27/04":{m:false,mi:true,r:true,s:true},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"VIGNIER Myloane",cl:"CP","27/04":{m:'abs',mi:true,r:true,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"BALLETTI Océa",cl:"CE1/CE2","27/04":{m:true,mi:true,r:true,s:false},"28/04":{m:true,mi:true,r:true,s:false},"30/04":{m:true,mi:true,r:true,s:false}},
+  {nom:"BARTHELEMY Gauthier",cl:"CE1/CE2","27/04":{m:false,mi:true,r:true,s:true},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:true}},
+  {nom:"BONHOMME Martin",cl:"CE1/CE2","27/04":{m:false,mi:false,r:false,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"BOURIANES MISTRI Noémie",cl:"CE1/CE2","27/04":{m:false,mi:true,r:true,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"BOURNAISON Louis",cl:"CE1/CE2","27/04":{m:false,mi:true,r:true,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"BRISSON Élise",cl:"CE1/CE2","27/04":{m:false,mi:true,r:true,s:true},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:true}},
+  {nom:"CHITA Naël",cl:"CE1/CE2","27/04":{m:false,mi:true,r:true,s:'abs'},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:true}},
+  {nom:"CLET Anaë",cl:"CE1/CE2","27/04":{m:false,mi:true,r:true,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"EXCOFFIER Hélios",cl:"CE1/CE2","27/04":{m:false,mi:true,r:true,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"FRANZETTI Théo",cl:"CE1/CE2","27/04":{m:true,mi:true,r:true,s:true},"28/04":{m:true,mi:true,r:true,s:true},"30/04":{m:true,mi:true,r:true,s:true}},
+  {nom:"GEORGIN Nolan",cl:"CE1/CE2","27/04":{m:false,mi:true,r:true,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"GUENE Jules",cl:"CE1/CE2","27/04":{m:false,mi:true,r:true,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"GUYOT Sacha",cl:"CE1/CE2","27/04":{m:false,mi:true,r:true,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:true}},
+  {nom:"HALLE Gabriel",cl:"CE1/CE2","27/04":{m:false,mi:true,r:true,s:true},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:true}},
+  {nom:"LAURENT Chloé",cl:"CE1/CE2","27/04":{m:false,mi:false,r:false,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"BRONNE Lucas",cl:"CE2/CM1","27/04":{m:true,mi:true,r:true,s:false},"28/04":{m:true,mi:true,r:true,s:false},"30/04":{m:true,mi:true,r:true,s:true}},
+  {nom:"CHASSAGNEUX Eden",cl:"CE2/CM1","27/04":{m:false,mi:true,r:true,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"CLANET Lucy",cl:"CE2/CM1","27/04":{m:false,mi:true,r:true,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"GUILLAUMOT Lucy",cl:"CE2/CM1","27/04":{m:false,mi:true,r:true,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"GÉRARD Gabriel",cl:"CE2/CM1","27/04":{m:false,mi:false,r:false,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"LAOUAR Inaya",cl:"CE2/CM1","27/04":{m:false,mi:true,r:true,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"LAURENT BREART Léo",cl:"CE2/CM1","27/04":{m:false,mi:true,r:true,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"MOAL Clara",cl:"CE2/CM1","27/04":{m:false,mi:true,r:true,s:true},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:true}},
+  {nom:"NGWETE Thomas",cl:"CE2/CM1","27/04":{m:true,mi:true,r:true,s:true},"28/04":{m:true,mi:true,r:true,s:true},"30/04":{m:true,mi:true,r:true,s:true}},
+  {nom:"OGNIEL Walène",cl:"CE2/CM1","27/04":{m:true,mi:false,r:false,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:false,r:false,s:false}},
+  {nom:"PANOT Paul",cl:"CE2/CM1","27/04":{m:false,mi:true,r:true,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"PASTORE Lyam",cl:"CE2/CM1","27/04":{m:true,mi:true,r:true,s:'abs'},"28/04":{m:true,mi:true,r:true,s:true},"30/04":{m:true,mi:true,r:true,s:true}},
+  {nom:"PETIT Owen",cl:"CE2/CM1","27/04":{m:false,mi:false,r:false,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:true}},
+  {nom:"PICCOLI Ryan",cl:"CE2/CM1","27/04":{m:false,mi:true,r:true,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"RIGOLLET Alix",cl:"CE2/CM1","27/04":{m:false,mi:true,r:true,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"ROUSSEL Eva",cl:"CE2/CM1","27/04":{m:false,mi:true,r:true,s:true},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:false,r:false,s:false}},
+  {nom:"VILLEMINOT Jules",cl:"CE2/CM1","27/04":{m:false,mi:true,r:true,s:true},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:true}},
+  {nom:"BERNARDON Maëly",cl:"CM1/CM2","27/04":{m:false,mi:true,r:true,s:false},"28/04":{m:false,mi:false,r:false,s:false},"30/04":{m:false,mi:true,r:true,s:true}},
+  {nom:"BOURNAISON Augustin",cl:"CM1/CM2","27/04":{m:false,mi:true,r:true,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"CHEVALIER Aurélien",cl:"CM1/CM2","27/04":{m:false,mi:true,r:true,s:false},"28/04":{m:false,mi:false,r:false,s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"DECELLE Louison",cl:"CM1/CM2","27/04":{m:false,mi:true,r:true,s:true},"28/04":{m:false,mi:true,r:true,s:true},"30/04":{m:false,mi:true,r:true,s:true}},
+  {nom:"DELAND'HUY Mylla",cl:"CM1/CM2","27/04":{m:true,mi:false,r:false,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:false,r:false,s:false}},
+  {nom:"DENOIT Juliette",cl:"CM1/CM2","27/04":{m:false,mi:false,r:false,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"DENOIT Justine",cl:"CM1/CM2","27/04":{m:false,mi:false,r:false,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"DESSOY Axelle",cl:"CM1/CM2","27/04":{m:false,mi:true,r:true,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"DESSOY Hannah",cl:"CM1/CM2","27/04":{m:false,mi:true,r:true,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"DESTRUMELLE Louna",cl:"CM1/CM2","27/04":{m:false,mi:true,r:true,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"FUCHS Hugo",cl:"CM1/CM2","27/04":{m:false,mi:false,r:false,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:false,r:false,s:false}},
+  {nom:"JONCOUR Chloé",cl:"CM1/CM2","27/04":{m:false,mi:true,r:true,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"LAGUERRE Pauline",cl:"CM1/CM2","27/04":{m:false,mi:true,r:true,s:true},"28/04":{m:false,mi:true,r:true,s:true},"30/04":{m:false,mi:true,r:true,s:true}},
+  {nom:"PIERRONT Nina",cl:"CM1/CM2","27/04":{m:false,mi:true,r:true,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:true,r:true,s:false}},
+  {nom:"SIMON Maël",cl:"CM1/CM2","27/04":{m:false,mi:false,r:false,s:false},"28/04":{m:false,mi:true,r:true,s:false},"30/04":{m:false,mi:false,r:false,s:false}},
+];
+
+// ============================================================
+// DONNÉES MERCREDI — +6 ans et -6 ans
+// Format: { nom, "25/03": { matin:"7h50", journee:"", restau:"13h30", apmidi:"" } }
+// ============================================================
+let MER_PLUS6=[
+  {nom:"BARTHELEMY Corentin","25/03":{matin:"",journee:"8h23",restau:"17h40",apmidi:""}},
+  {nom:"BERTILI-LAUTREFIN Kaïly","25/03":{matin:"",journee:"",restau:"13h30",apmidi:"18h30"}},
+  {nom:"BONHOMME Martin","25/03":{matin:"",journee:"8h25",restau:"16h47",apmidi:""}},
+  {nom:"BOURNAISON Augustin","25/03":{matin:"",journee:"7h50",restau:"17h12",apmidi:""}},
+  {nom:"BOURNAISON Louis","25/03":{matin:"",journee:"8h40",restau:"17h22",apmidi:""}},
+  {nom:"BURLAT Mylan","25/03":{matin:"",journee:"8h35",restau:"17h36",apmidi:""}},
+  {nom:"CARLIER Alice","25/03":{matin:"",journee:"8h35",restau:"17h36",apmidi:""}},
+  {nom:"GODFROY Hugo","25/03":{matin:"",journee:"8h00",restau:"18h35",apmidi:""}},
+  {nom:"GODFROY Margaux","25/03":{matin:"",journee:"8h00",restau:"18h35",apmidi:""}},
+  {nom:"GROSSELIN Gabin","25/03":{matin:"7h50",journee:"",restau:"13h30",apmidi:""}},
+  {nom:"GUILLAUMOT Lucy","25/03":{matin:"",journee:"7h30",restau:"17h00",apmidi:""}},
+  {nom:"GÉRARD Gabriel","25/03":{matin:"",journee:"8h50",restau:"17h65",apmidi:""}},
+  {nom:"HALLE Gabriel","25/03":{matin:"8h05",journee:"",restau:"17h40",apmidi:""}},
+  {nom:"NEVES Elina","25/03":{matin:"",journee:"7h35",restau:"17h40",apmidi:""}},
+  {nom:"PASTORE Lyam","25/03":{matin:"",journee:"8h45",restau:"18h09",apmidi:""}},
+  {nom:"SEQUEVAL Emma","25/03":{matin:"",journee:"8h20",restau:"15h02",apmidi:""}},
+  {nom:"TONDA NGWENDJA Ilyana","25/03":{matin:"",journee:"8h00",restau:"16h50",apmidi:""}},
+  {nom:"VACHER Priam","25/03":{matin:"",journee:"8h00",restau:"17h52",apmidi:""}},
+];
+
+let MER_MOINS6=[
+  {nom:"BELLANCE Océane","25/03":{matin:"",journee:"7h35",restau:"16h40",apmidi:""}},
+  {nom:"CARLIER Lilou","25/03":{matin:"",journee:"7h10",restau:"16h40",apmidi:""}},
+  {nom:"GODFROY Axel","25/03":{matin:"",journee:"7h10",restau:"16h40",apmidi:""}},
+  {nom:"MISMAC Aimée","25/03":{matin:"",journee:"7h40",restau:"16h40",apmidi:""}},
+  {nom:"MAISTRE Zoé","25/03":{matin:"",journee:"7h10",restau:"16h40",apmidi:""}},
+  {nom:"MARCHAL Julia Louis","25/03":{matin:"",journee:"7h40",restau:"16h40",apmidi:""}},
+  {nom:"NEVES Jules","25/03":{matin:"",journee:"7h10",restau:"16h40",apmidi:""}},
+  {nom:"SEQUEVAL Lucie","25/03":{matin:"",journee:"7h10",restau:"16h40",apmidi:""}},
+  {nom:"VACHER Héloïse","25/03":{matin:"",journee:"8h00",restau:"17h52",apmidi:""}},
+];
+
+// ============================================================
+// DONNÉES VACANCES — -6 ans et +6 ans
+// Période du 20 au 24/04/2026
+// ============================================================
+let VAC_MOINS6=[
+  {nom:"BARTHELEMY Timoté","20/04":{matin:"",journee:"8h14",restau:"17h15",apmidi:""},"21/04":{matin:"",journee:"8h00",restau:"9h15",apmidi:""},"22/04":{matin:"",journee:"8h09",restau:"17h18",apmidi:""},"23/04":{matin:"",journee:"",restau:"",apmidi:""},"24/04":{matin:"",journee:"",restau:"",apmidi:""}},
+  {nom:"BELLANCE Djavann","20/04":{matin:"",journee:"8h26",restau:"17h14",apmidi:""},"21/04":{matin:"",journee:"7h20",restau:"16h55",apmidi:""},"22/04":{matin:"",journee:"7h25",restau:"16h00",apmidi:""},"23/04":{matin:"",journee:"9h30",restau:"17h15",apmidi:""},"24/04":{matin:"",journee:"9h30",restau:"7h13",apmidi:""}},
+  {nom:"BERRARD ROUSSEL Raphaël","20/04":{matin:"8h30",journee:"",restau:"9h20",apmidi:""},"21/04":{matin:"",journee:"",restau:"",apmidi:""},"22/04":{matin:"",journee:"",restau:"",apmidi:""},"23/04":{matin:"",journee:"",restau:"",apmidi:""},"24/04":{matin:"8h00",journee:"",restau:"8h20",apmidi:""}},
+  {nom:"BOURLET Loïc","20/04":{matin:"",journee:"7h48",restau:"17h30",apmidi:""},"21/04":{matin:"",journee:"8h00",restau:"17h00",apmidi:""},"22/04":{matin:"",journee:"",restau:"",apmidi:""},"23/04":{matin:"",journee:"8h10",restau:"18h15",apmidi:""},"24/04":{matin:"",journee:"8h15",restau:"8h11",apmidi:""}},
+  {nom:"BOUSSANGE Hanaë","20/04":{matin:"",journee:"",restau:"",apmidi:""},"21/04":{matin:"",journee:"",restau:"",apmidi:""},"22/04":{matin:"",journee:"",restau:"",apmidi:""},"23/04":{matin:"",journee:"",restau:"",apmidi:""},"24/04":{matin:"",journee:"ABS",restau:"8h15",apmidi:"8h11"}},
+  {nom:"CARLIER Lilou","20/04":{matin:"",journee:"8h05",restau:"17h20",apmidi:""},"21/04":{matin:"",journee:"",restau:"",apmidi:""},"22/04":{matin:"",journee:"",restau:"",apmidi:""},"23/04":{matin:"",journee:"8h01",restau:"17h20",apmidi:""},"24/04":{matin:"",journee:"8h15",restau:"1h39",apmidi:"8h03"}},
+  {nom:"CLET Enaël","20/04":{matin:"",journee:"",restau:"",apmidi:""},"21/04":{matin:"",journee:"",restau:"7h20",apmidi:""},"22/04":{matin:"",journee:"",restau:"",apmidi:""},"23/04":{matin:"",journee:"",restau:"",apmidi:""},"24/04":{matin:"",journee:"",restau:"",apmidi:""}},
+  {nom:"COSTAUX BRUGNON Hugo","20/04":{matin:"8h30",journee:"",restau:"14h",apmidi:""},"21/04":{matin:"",journee:"ABS",restau:"ABS",apmidi:""},"22/04":{matin:"",journee:"",restau:"",apmidi:""},"23/04":{matin:"",journee:"",restau:"",apmidi:""},"24/04":{matin:"",journee:"11h40",restau:"16h59",apmidi:""}},
+  {nom:"DELIMANGE Anaé","20/04":{matin:"",journee:"8h12",restau:"13h20",apmidi:"9h10"},"21/04":{matin:"",journee:"8h10",restau:"9h32",apmidi:""},"22/04":{matin:"",journee:"",restau:"",apmidi:""},"23/04":{matin:"",journee:"",restau:"ABS",apmidi:""},"24/04":{matin:"",journee:"8h11",restau:"",apmidi:""}},
+  {nom:"FRANZETTI Maé","20/04":{matin:"",journee:"7h02",restau:"9h15",apmidi:""},"21/04":{matin:"",journee:"",restau:"9h26",apmidi:""},"22/04":{matin:"",journee:"9h38",restau:"17h38",apmidi:""},"23/04":{matin:"",journee:"",restau:"",apmidi:""},"24/04":{matin:"",journee:"9h45",restau:"18h44",apmidi:""}},
+  {nom:"GEORGIN Callie","20/04":{matin:"8h14",journee:"",restau:"18h13",apmidi:""},"21/04":{matin:"",journee:"",restau:"",apmidi:""},"22/04":{matin:"",journee:"",restau:"",apmidi:""},"23/04":{matin:"",journee:"",restau:"",apmidi:""},"24/04":{matin:"",journee:"",restau:"",apmidi:""}},
+  {nom:"HEYNDERICK Charly","20/04":{matin:"",journee:"ABS",restau:"ABS",apmidi:""},"21/04":{matin:"",journee:"ABS",restau:"ABS",apmidi:""},"22/04":{matin:"",journee:"ABS",restau:"",apmidi:""},"23/04":{matin:"",journee:"ABS",restau:"",apmidi:""},"24/04":{matin:"",journee:"ABS",restau:"",apmidi:""}},
+  {nom:"HURTAUX Maël","20/04":{matin:"8h33",journee:"",restau:"17h00",apmidi:""},"21/04":{matin:"8h40",journee:"",restau:"17h27",apmidi:""},"22/04":{matin:"",journee:"9h39",restau:"17h38",apmidi:""},"23/04":{matin:"",journee:"9h38",restau:"",apmidi:""},"24/04":{matin:"",journee:"9h37",restau:"7h10",apmidi:""}},
+  {nom:"MARCHAL Julia Louis","20/04":{matin:"",journee:"7h38",restau:"9h30",apmidi:""},"21/04":{matin:"",journee:"8h40",restau:"7h27",apmidi:""},"22/04":{matin:"",journee:"9h39",restau:"",apmidi:""},"23/04":{matin:"",journee:"",restau:"",apmidi:""},"24/04":{matin:"",journee:"9h37",restau:"7h10",apmidi:""}},
+  {nom:"VACHER Hélios","20/04":{matin:"",journee:"",restau:"",apmidi:""},"21/04":{matin:"",journee:"",restau:"",apmidi:""},"22/04":{matin:"",journee:"8h00",restau:"8h00",apmidi:""},"23/04":{matin:"",journee:"",restau:"",apmidi:""},"24/04":{matin:"",journee:"9h45",restau:"17h35",apmidi:""}},
+];
+
+let VAC_PLUS6=[
+  {nom:"BARTHELEMY Gauthier","20/04":{matin:"",journee:"9h14",restau:"17h15",apmidi:""},"21/04":{matin:"",journee:"8h00",restau:"9h15",apmidi:""},"22/04":{matin:"8h30",journee:"",restau:"9h14",apmidi:"8h"},"23/04":{matin:"",journee:"",restau:"",apmidi:""},"24/04":{matin:"",journee:"",restau:"",apmidi:""}},
+  {nom:"BOUSSANGE Hanaë","20/04":{matin:"",journee:"",restau:"",apmidi:""},"21/04":{matin:"",journee:"",restau:"",apmidi:""},"22/04":{matin:"",journee:"",restau:"",apmidi:""},"23/04":{matin:"",journee:"",restau:"",apmidi:""},"24/04":{matin:"",journee:"ABS",restau:"",apmidi:""}},
+  {nom:"BURLAT Mylan","20/04":{matin:"",journee:"7h40",restau:"17h00",apmidi:""},"21/04":{matin:"",journee:"7h36",restau:"17h10",apmidi:""},"22/04":{matin:"",journee:"7h36",restau:"17h10",apmidi:""},"23/04":{matin:"",journee:"7h31",restau:"15h42",apmidi:""},"24/04":{matin:"",journee:"7h40",restau:"17h48",apmidi:""}},
+  {nom:"CARLIER Alice","20/04":{matin:"",journee:"8h05",restau:"",apmidi:""},"21/04":{matin:"",journee:"8h00",restau:"15h20",apmidi:""},"22/04":{matin:"",journee:"",restau:"",apmidi:""},"23/04":{matin:"",journee:"",restau:"",apmidi:""},"24/04":{matin:"",journee:"8h11",restau:"",apmidi:""}},
+  {nom:"CLET Anaë","20/04":{matin:"",journee:"",restau:"",apmidi:""},"21/04":{matin:"",journee:"",restau:"",apmidi:""},"22/04":{matin:"",journee:"",restau:"8h20",apmidi:"18h22"},"23/04":{matin:"",journee:"",restau:"",apmidi:""},"24/04":{matin:"",journee:"8h90",restau:"8h03",apmidi:""}},
+  {nom:"FRANZETTI Théo","20/04":{matin:"",journee:"8h12",restau:"17h15",apmidi:""},"21/04":{matin:"",journee:"9h30",restau:"12h24",apmidi:""},"22/04":{matin:"",journee:"",restau:"",apmidi:""},"23/04":{matin:"",journee:"9h35",restau:"13h",apmidi:""},"24/04":{matin:"",journee:"9h45",restau:"17h00",apmidi:""}},
+  {nom:"GEORGIN Nolan","20/04":{matin:"",journee:"",restau:"",apmidi:""},"21/04":{matin:"",journee:"",restau:"",apmidi:""},"22/04":{matin:"",journee:"",restau:"",apmidi:""},"23/04":{matin:"",journee:"",restau:"",apmidi:""},"24/04":{matin:"",journee:"",restau:"",apmidi:""}},
+  {nom:"GÉRARD Gabriel","20/04":{matin:"",journee:"8h15",restau:"18h16",apmidi:""},"21/04":{matin:"",journee:"",restau:"",apmidi:""},"22/04":{matin:"8h17",journee:"",restau:"ABS",apmidi:""},"23/04":{matin:"",journee:"9h10",restau:"9h13",apmidi:""},"24/04":{matin:"",journee:"ABS",restau:"",apmidi:""}},
+  {nom:"HALLE Gabriel","20/04":{matin:"",journee:"8h45",restau:"17h40",apmidi:""},"21/04":{matin:"",journee:"8h15",restau:"17h09",apmidi:""},"22/04":{matin:"8h15",journee:"",restau:"8h09",apmidi:""},"23/04":{matin:"",journee:"8h15",restau:"15h30",apmidi:""},"24/04":{matin:"",journee:"8h60",restau:"17h05",apmidi:""}},
+  {nom:"KOENIG Paul","20/04":{matin:"",journee:"8h14",restau:"18h20",apmidi:""},"21/04":{matin:"",journee:"8h15",restau:"17h50",apmidi:""},"22/04":{matin:"",journee:"ABS",restau:"",apmidi:""},"23/04":{matin:"",journee:"8h20",restau:"18h13",apmidi:""},"24/04":{matin:"",journee:"8h20",restau:"17h06",apmidi:""}},
+  {nom:"LAOUAR Inaya","20/04":{matin:"",journee:"",restau:"",apmidi:""},"21/04":{matin:"",journee:"",restau:"",apmidi:""},"22/04":{matin:"",journee:"",restau:"",apmidi:""},"23/04":{matin:"",journee:"",restau:"",apmidi:""},"24/04":{matin:"",journee:"",restau:"13h06",apmidi:""}},
+  {nom:"LAURENT BREART Léo","20/04":{matin:"",journee:"13h55",restau:"17h45",apmidi:""},"21/04":{matin:"",journee:"8h10",restau:"8h01",apmidi:""},"22/04":{matin:"",journee:"13h55",restau:"17h02",apmidi:""},"23/04":{matin:"",journee:"",restau:"",apmidi:""},"24/04":{matin:"",journee:"9h35",restau:"18h00",apmidi:""}},
+  {nom:"PASTORE Lyam","20/04":{matin:"8h11",journee:"",restau:"18h00",apmidi:""},"21/04":{matin:"",journee:"8h50",restau:"17h00",apmidi:""},"22/04":{matin:"",journee:"",restau:"",apmidi:""},"23/04":{matin:"18h15",journee:"",restau:"18h13",apmidi:""},"24/04":{matin:"",journee:"",restau:"",apmidi:""}},
+  {nom:"PICCOLI Ryan","20/04":{matin:"",journee:"8h00",restau:"16h55",apmidi:""},"21/04":{matin:"",journee:"8h00",restau:"16h55",apmidi:""},"22/04":{matin:"",journee:"ABS",restau:"",apmidi:""},"23/04":{matin:"",journee:"8h00",restau:"11h76",apmidi:""},"24/04":{matin:"",journee:"8h00",restau:"6h08",apmidi:""}},
+  {nom:"PICCOLI Ylan","20/04":{matin:"8h05",journee:"",restau:"16h30",apmidi:""},"21/04":{matin:"",journee:"8h00",restau:"16h55",apmidi:""},"22/04":{matin:"",journee:"",restau:"",apmidi:""},"23/04":{matin:"",journee:"8h44",restau:"18h12",apmidi:""},"24/04":{matin:"",journee:"8h00",restau:"16h15",apmidi:""}},
+  {nom:"ROGER Mathilde","20/04":{matin:"",journee:"",restau:"",apmidi:""},"21/04":{matin:"",journee:"",restau:"",apmidi:""},"22/04":{matin:"",journee:"8h40",restau:"17h25",apmidi:""},"23/04":{matin:"",journee:"8h40",restau:"13h13",apmidi:""},"24/04":{matin:"8h48",journee:"",restau:"17h11",apmidi:""}},
+  {nom:"ROUSSEL Eva","20/04":{matin:"",journee:"",restau:"",apmidi:""},"21/04":{matin:"",journee:"",restau:"",apmidi:""},"22/04":{matin:"",journee:"",restau:"",apmidi:""},"23/04":{matin:"",journee:"",restau:"",apmidi:""},"24/04":{matin:"",journee:"",restau:"",apmidi:""}},
+  {nom:"STIOT Léo","20/04":{matin:"",journee:"8h30",restau:"17h14",apmidi:""},"21/04":{matin:"",journee:"8h44",restau:"16h50",apmidi:""},"22/04":{matin:"",journee:"8h00",restau:"17h20",apmidi:""},"23/04":{matin:"",journee:"8h46",restau:"15h13",apmidi:""},"24/04":{matin:"",journee:"",restau:"",apmidi:""}},
+  {nom:"TONDA NGWENDJA Ilyana","20/04":{matin:"",journee:"9h30",restau:"17h",apmidi:""},"21/04":{matin:"",journee:"10h30",restau:"ABS",apmidi:"17h05"},"22/04":{matin:"",journee:"8h40",restau:"16h43",apmidi:""},"23/04":{matin:"",journee:"13h",restau:"16h55",apmidi:""},"24/04":{matin:"",journee:"ABS",restau:"",apmidi:""}},
+  {nom:"VACHER Priam","20/04":{matin:"",journee:"",restau:"",apmidi:""},"21/04":{matin:"",journee:"",restau:"",apmidi:""},"22/04":{matin:"",journee:"",restau:"",apmidi:""},"23/04":{matin:"",journee:"8h00",restau:"18h05",apmidi:""},"24/04":{matin:"",journee:"9h44",restau:"17h38",apmidi:""}},
+];
+
+// ============================================================
+// STATE
+// ============================================================
+let periDate='27/04', periClass='Toutes', periDates=['27/04','28/04','30/04'];
+let merDate='25/03', merGrp='moins6', merDates=['25/03'];
+let recapMerGrp='moins6';
+let vacDate='20/04', vacGrp='moins6', vacDates=['20/04','21/04','22/04','23/04','24/04'];
+let recapVacGrp='moins6';
+
+// ============================================================
+// UTILITAIRES
+// ============================================================
+function getPeriVal(e,date,champ){return e[date]?e[date][champ]:false;}
+function getMerData(e,date){return e[date]||{matin:'',journee:'',restau:'',apmidi:''};}
+function getVacData(e,date){return e[date]||{matin:'',journee:'',restau:'',apmidi:''};}
+function labelPeriDate(d){const map={'27/04':'Lun 27/04','28/04':'Mar 28/04','30/04':'Jeu 30/04'};return map[d]||d;}
+function labelMerDate(d){return 'Mer '+d;}
+function labelVacDate(d){const days={'20/04':'Lun','21/04':'Mar','22/04':'Mer','23/04':'Jeu','24/04':'Ven'};return(days[d]||'')+' '+d;}
+function sortedPeri(){
+  return [...PERI].sort((a,b)=>{
+    const ia=CLASS_ORDER.indexOf(a.cl),ib=CLASS_ORDER.indexOf(b.cl);
+    return ia!==ib?ia-ib:a.nom.localeCompare(b.nom);
+  });
+}
+function currentMerData(){return merGrp==='plus6'?MER_PLUS6:MER_MOINS6;}
+function currentVacData(){return vacGrp==='plus6'?VAC_PLUS6:VAC_MOINS6;}
+
+// ============================================================
+// RENDER PÉRISCOLAIRE
+// ============================================================
+function renderPeriDateTabs(){
+  document.getElementById('peri-date-tabs').innerHTML=periDates.map(d=>
+    `<button class="dt${d===periDate?' act':''}" onclick="selectPeriDate('${d}',this)">${labelPeriDate(d)}</button>`
+  ).join('');
+}
+
+function renderPeriTable(filter=''){
+  const rows=sortedPeri().filter(e=>(periClass==='Toutes'||e.cl===periClass)&&(!filter||e.nom.toLowerCase().includes(filter.toLowerCase())));
+  const d=periDate;
+  let html='',lastCl=null;
+  rows.forEach(e=>{
+    if(periClass==='Toutes'&&e.cl!==lastCl){
+      const col=CLASS_COLOR[e.cl]||'#888';
+      html+=`<tr class="cl-sep"><td colspan="7" style="background:${col}14;border-left:3px solid ${col};color:${col};">${e.cl}</td></tr>`;
+      lastCl=e.cl;
+    }
+    const mk=(champ,cls)=>{
+      const v=getPeriVal(e,d,champ);
+      const label=v===true?'✓':v==='abs'?'ABS':'';
+      const triCls=v===true?`pres ${cls}`:v==='abs'?'abs':'';
+      const safe=e.nom.replace(/'/g,"\\'");
+      return`<td class="cc"><button class="tri ${triCls}" onclick="cyclePeri('${safe}','${d}','${champ}',this)">${label}</button></td>`;
+    };
+    html+=`<tr data-nom="${e.nom.toLowerCase()}">
+      <td class="nc">${e.nom}</td><td><span class="pill">${e.cl}</span></td>
+      ${mk('m','m')}${mk('mi','mi')}${mk('r','r')}${mk('s','s')}
+      <td><button class="btn btn-g btn-sm" onclick="openModalEdit('peri','${e.nom.replace(/'/g,"\\'")}')">Modifier</button></td>
+    </tr>`;
+  });
+  document.getElementById('peri-tbody').innerHTML=html;
+  document.getElementById('peri-table-title').textContent=(periClass==='Toutes'?'Toutes les classes':periClass)+' — '+labelPeriDate(periDate);
+  document.getElementById('peri-table-sub').textContent=rows.length+' enfant'+(rows.length>1?'s':'');
+  document.getElementById('tc-all').textContent=PERI.length;
+  renderPeriTfoot(rows, d);
+  renderPeriStats();
+}
+
+function renderPeriStats(){
+  const rows=sortedPeri().filter(e=>periClass==='Toutes'||e.cl===periClass);
+  const d=periDate;
+  const cnt=c=>rows.filter(e=>getPeriVal(e,d,c)===true).length;
+  document.getElementById('peri-stats').innerHTML=`
+    <div class="sc"><div class="sd" style="background:var(--matin)"></div><span class="sv cm">${cnt('m')}</span><span class="sl">matin</span></div>
+    <div class="sc"><div class="sd" style="background:var(--midi)"></div><span class="sv cmi">${cnt('mi')}</span><span class="sl">midi</span></div>
+    <div class="sc"><div class="sd" style="background:var(--restau)"></div><span class="sv cr">${cnt('r')}</span><span class="sl">restau.</span></div>
+    <div class="sc"><div class="sd" style="background:var(--soir)"></div><span class="sv cs">${cnt('s')}</span><span class="sl">soir</span></div>`;
+}
+
+// ============================================================
+// RENDER MERCREDI
+// ============================================================
+function renderMerDateTabs(){
+  document.getElementById('mer-date-tabs').innerHTML=merDates.map(d=>
+    `<button class="dt mer${d===merDate?' act':''}" onclick="selectMerDate('${d}',this)">${labelMerDate(d)}</button>`
+  ).join('');
+}
+
+function renderMerTable(filter=''){
+  const data=currentMerData();
+  const rows=[...data].sort((a,b)=>a.nom.localeCompare(b.nom)).filter(e=>!filter||e.nom.toLowerCase().includes(filter.toLowerCase()));
+  const d=merDate;
+  const mkH=(val,champ,nom)=>{
+    const v=val||'';
+    const safe=nom.replace(/'/g,"\\'");
+    return`<td class="cc"><input class="h-inp${v?' v':''}" value="${v}" placeholder="—" onchange="updateMerField('${safe}','${d}','${champ}',this.value)" onblur="saveAll()"></td>`;
+  };
+  document.getElementById('mer-tbody').innerHTML=rows.map(e=>{
+    const dd=getMerData(e,d);
+    const safe=e.nom.replace(/'/g,"\\'");
+    return`<tr data-nom="${e.nom.toLowerCase()}">
+      <td class="nc">${e.nom}</td>
+      ${mkH(dd.matin,'matin',e.nom)}
+      ${mkH(dd.journee,'journee',e.nom)}
+      ${mkH(dd.restau,'restau',e.nom)}
+      ${mkH(dd.apmidi,'apmidi',e.nom)}
+      <td><button class="btn btn-g btn-sm" onclick="openModalEdit('mer','${safe}')">Modifier</button></td>
+    </tr>`;
+  }).join('');
+  const grpLabel=merGrp==='plus6'?'+6 ans':'-6 ans';
+  document.getElementById('mer-table-title').textContent=`Mercredi ALSH — ${grpLabel} — ${labelMerDate(merDate)}`;
+  document.getElementById('mer-table-sub').textContent=rows.length+' enfant'+(rows.length>1?'s':'');
+  renderHoraireTfoot('mer-tfoot', rows, d, getMerData);
+  // stats
+  const tot={matin:0,journee:0,restau:0,apmidi:0};
+  rows.forEach(e=>{const dd=getMerData(e,d);if(dd.matin)tot.matin++;if(dd.journee)tot.journee++;if(dd.restau)tot.restau++;if(dd.apmidi)tot.apmidi++;});
+  document.getElementById('mer-stats').innerHTML=`
+    <div class="sc"><div class="sd" style="background:var(--matin)"></div><span class="sv cm">${tot.matin}</span><span class="sl">ALSH matin</span></div>
+    <div class="sc"><div class="sd" style="background:var(--mer)"></div><span class="sv cmer">${tot.journee}</span><span class="sl">journée</span></div>
+    <div class="sc"><div class="sd" style="background:var(--restau)"></div><span class="sv cr">${tot.restau}</span><span class="sl">restau.</span></div>
+    <div class="sc"><div class="sd" style="background:var(--soir)"></div><span class="sv cs">${tot.apmidi}</span><span class="sl">après-midi</span></div>`;
+}
+
+// ============================================================
+// RENDER RÉCAP PÉRI
+// ============================================================
+function renderRecapPeri(){
+  const p=periDates;
+  document.getElementById('recap-peri-period').textContent='Semaine du '+p[0]+' au '+p[p.length-1];
+  const thead=document.querySelector('#recap-peri-table thead tr');
+  thead.innerHTML='<th>Classe</th><th>Élèves</th>'+p.map(d=>`<th class="cm">${labelPeriDate(d)} M</th><th class="cmi">Mi</th><th class="cr">R</th><th class="cs">S</th>`).join('');
+  let totals=p.map(()=>({m:0,mi:0,r:0,s:0}));
+  document.getElementById('recap-peri-tbody').innerHTML=CLASS_ORDER.map(cl=>{
+    const ef=PERI.filter(e=>e.cl===cl);
+    const cells=p.map((d,i)=>{
+      const m=ef.filter(e=>getPeriVal(e,d,'m')===true).length;
+      const mi=ef.filter(e=>getPeriVal(e,d,'mi')===true).length;
+      const r=ef.filter(e=>getPeriVal(e,d,'r')===true).length;
+      const s=ef.filter(e=>getPeriVal(e,d,'s')===true).length;
+      totals[i].m+=m;totals[i].mi+=mi;totals[i].r+=r;totals[i].s+=s;
+      return`<td class="cm" style="font-family:'DM Mono',monospace">${m}</td><td class="cmi">${mi}</td><td class="cr">${r}</td><td class="cs">${s}</td>`;
+    }).join('');
+    return`<tr><td style="font-weight:500">${cl}</td><td style="font-family:'DM Mono',monospace;color:var(--text3)">${ef.length}</td>${cells}</tr>`;
+  }).join('')+`<tr style="background:var(--surface2);font-weight:600"><td>Total</td><td style="font-family:'DM Mono',monospace">${PERI.length}</td>${totals.map(t=>`<td class="cm">${t.m}</td><td class="cmi">${t.mi}</td><td class="cr">${t.r}</td><td class="cs">${t.s}</td>`).join('')}</tr>`;
+}
+
+// ============================================================
+// RENDER RÉCAP MERCREDI
+// ============================================================
+function renderRecapMer(){
+  const src=recapMerGrp==='plus6'?MER_PLUS6:MER_MOINS6;
+  const sorted=[...src].sort((a,b)=>a.nom.localeCompare(b.nom));
+  const grpLabel=recapMerGrp==='plus6'?'+6 ans':'-6 ans';
+  document.getElementById('mer-recap-sub').textContent=`${grpLabel} · ${sorted.length} enfants · ${merDates.length} mercredi(s)`;
+  // totaux
+  let totM=0,totJ=0,totR=0,totA=0;
+  merDates.forEach(d=>src.forEach(e=>{const dd=getMerData(e,d);if(dd.matin)totM++;if(dd.journee)totJ++;if(dd.restau)totR++;if(dd.apmidi)totA++;}));
+  document.getElementById('mer-caf-grid').innerHTML=`
+    <div class="caf-card" style="background:var(--matl);border-color:#bfdbfe"><div class="caf-val cm">${totM}</div><div class="caf-lbl">ALSH matin</div></div>
+    <div class="caf-card" style="background:var(--merl);border-color:#a5f3fc"><div class="caf-val cmer">${totJ}</div><div class="caf-lbl">ALSH journée</div></div>
+    <div class="caf-card" style="background:var(--resl);border-color:#bbf7d0"><div class="caf-val cr">${totR}</div><div class="caf-lbl">ALSH restauration</div></div>
+    <div class="caf-card" style="background:var(--soirl);border-color:#ddd6fe"><div class="caf-val cs">${totA}</div><div class="caf-lbl">ALSH après-midi</div></div>`;
+  // dates headers
+  document.getElementById('mer-recap-dates').innerHTML=merDates.map(d=>`<th class="cmer">${labelMerDate(d)}<br><small style="font-weight:400;color:var(--text3)">M / J / R / A</small></th>`).join('');
+  document.getElementById('mer-recap-tbody').innerHTML=sorted.map(e=>{
+    const cells=merDates.map(d=>{
+      const dd=getMerData(e,d);
+      const v=[dd.matin||'—',dd.journee||'—',dd.restau||'—',dd.apmidi||'—'].join(' · ');
+      return`<td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text2)">${v}</td>`;
+    }).join('');
+    return`<tr><td class="nc">${e.nom}</td>${cells}</tr>`;
+  }).join('');
+}
+
+// ============================================================
+// EVENTS
+// ============================================================
+// Cycle 3 états : false → true → 'abs' → false
+function cyclePeri(nom,date,champ,btn){
+  const e=PERI.find(x=>x.nom.toLowerCase()===nom.toLowerCase());
+  if(!e||!e[date])return;
+  const cur=e[date][champ];
+  const next=cur===false?true:cur===true?'abs':false;
+  e[date][champ]=next;
+  // Mise à jour visuelle directe sans re-render complet
+  const cls=champ==='m'?'m':champ==='mi'?'mi':champ==='r'?'r':'s';
+  btn.className='tri'+(next===true?` pres ${cls}`:next==='abs'?' abs':'');
+  btn.textContent=next===true?'✓':next==='abs'?'ABS':'';
+  renderPeriStats();
+  saveAll();
+}
+function updateMerField(nom,date,champ,val){
+  const src=currentMerData();
+  const e=src.find(x=>x.nom.toLowerCase()===nom.toLowerCase());
+  if(e){if(!e[date])e[date]={matin:'',journee:'',restau:'',apmidi:''};e[date][champ]=val;}
+}
+function updateVacField(nom,date,champ,val){
+  const src=currentVacData();
+  const e=src.find(x=>x.nom.toLowerCase()===nom.toLowerCase());
+  if(e){if(!e[date])e[date]={matin:'',journee:'',restau:'',apmidi:''};e[date][champ]=val;}
+}
+function selectPeriDate(d,el){periDate=d;document.querySelectorAll('#peri-date-tabs .dt').forEach(t=>t.classList.remove('act'));el.classList.add('act');renderPeriTable();}
+function selectMerDate(d,el){merDate=d;document.querySelectorAll('#mer-date-tabs .dt').forEach(t=>t.classList.remove('act'));el.classList.add('act');renderMerTable();}
+function selectVacDate(d,el){vacDate=d;document.querySelectorAll('#vac-date-tabs .dt').forEach(t=>t.classList.remove('act'));el.classList.add('act');renderVacTable();}
+function selectClassTab(cl,el){periClass=cl;document.querySelectorAll('#class-tabs .tab').forEach(t=>t.classList.remove('act'));el.classList.add('act');renderPeriTable();}
+function selectGrp(g,el){merGrp=g;document.querySelectorAll('#view-mercredi .grp-tab').forEach(t=>t.classList.remove('act'));el.classList.add('act');renderMerTable();}
+function selectVacGrp(g,el){vacGrp=g;document.querySelectorAll('#view-vacances .grp-tab').forEach(t=>t.classList.remove('act'));el.classList.add('act');renderVacTable();}
+function selectRecapGrp(g,el){recapMerGrp=g;document.querySelectorAll('[id^=rgrp]').forEach(t=>t.classList.remove('act'));el.classList.add('act');renderRecapMer();}
+function selectRecapVacGrp(g,el){recapVacGrp=g;document.querySelectorAll('[id^=rvgrp]').forEach(t=>t.classList.remove('act'));el.classList.add('act');renderRecapVac();}
+function jumpClass(cl){periClass=cl;showView('periscolaire',document.getElementById('ni-pt'));document.querySelectorAll('#class-tabs .tab').forEach(t=>t.classList.toggle('act',t.textContent.trim().startsWith(cl)));renderPeriTable();}
+function searchPeri(q){renderPeriTable(q);}
+function searchMer(q){renderMerTable(q);}
+function searchVac(q){renderVacTable(q);}
+function savePeri(){saveAll();showToast('Pointage enregistré');}
+function saveMer(){saveAll();showToast('Mercredi enregistré');}
+function saveVac(){saveAll();showToast('Vacances enregistrées');}
+function exportCAF(){showToast('Export CAF — à connecter au backend','warn');}
+
+// ============================================================
+// RENDER VACANCES (même logique que mercredi)
+// ============================================================
+function renderVacDateTabs(){
+  document.getElementById('vac-date-tabs').innerHTML=vacDates.map(d=>
+    `<button class="dt mer${d===vacDate?' act':''}" onclick="selectVacDate('${d}',this)" style="border-color:var(--vac);color:${d===vacDate?'white':'var(--vac)'};background:${d===vacDate?'var(--vac)':'var(--surface)'}">${labelVacDate(d)}</button>`
+  ).join('');
+}
+
+function renderVacTable(filter=''){
+  const data=currentVacData();
+  const rows=[...data].sort((a,b)=>a.nom.localeCompare(b.nom)).filter(e=>!filter||e.nom.toLowerCase().includes(filter.toLowerCase()));
+  const d=vacDate;
+  const mkH=(val,champ,nom)=>{
+    const v=val||'';
+    const safe=nom.replace(/'/g,"\\'");
+    return`<td class="cc"><input class="h-inp${v?' v':''}" value="${v}" placeholder="—" onchange="updateVacField('${safe}','${d}','${champ}',this.value)" onblur="saveAll()"></td>`;
+  };
+  document.getElementById('vac-tbody').innerHTML=rows.map(e=>{
+    const dd=getVacData(e,d);
+    const safe=e.nom.replace(/'/g,"\\'");
+    return`<tr data-nom="${e.nom.toLowerCase()}">
+      <td class="nc">${e.nom}</td>
+      ${mkH(dd.matin,'matin',e.nom)}
+      ${mkH(dd.journee,'journee',e.nom)}
+      ${mkH(dd.restau,'restau',e.nom)}
+      ${mkH(dd.apmidi,'apmidi',e.nom)}
+      <td><button class="btn btn-g btn-sm" onclick="openModalEdit('vac','${safe}')">Modifier</button></td>
+    </tr>`;
+  }).join('');
+  const grpLabel=vacGrp==='plus6'?'+6 ans':'-6 ans';
+  document.getElementById('vac-table-title').textContent=`Vacances ALSH — ${grpLabel} — ${labelVacDate(vacDate)}`;
+  document.getElementById('vac-table-sub').textContent=rows.length+' enfant'+(rows.length>1?'s':'');
+  renderHoraireTfoot('vac-tfoot', rows, d, getVacData);
+  const tot={matin:0,journee:0,restau:0,apmidi:0};
+  rows.forEach(e=>{const dd=getVacData(e,d);if(dd.matin&&dd.matin!=='ABS')tot.matin++;if(dd.journee&&dd.journee!=='ABS')tot.journee++;if(dd.restau&&dd.restau!=='ABS')tot.restau++;if(dd.apmidi&&dd.apmidi!=='ABS')tot.apmidi++;});
+  document.getElementById('vac-stats').innerHTML=`
+    <div class="sc"><div class="sd" style="background:var(--matin)"></div><span class="sv cm">${tot.matin}</span><span class="sl">ALSH matin</span></div>
+    <div class="sc"><div class="sd" style="background:var(--mer)"></div><span class="sv cmer">${tot.journee}</span><span class="sl">journée</span></div>
+    <div class="sc"><div class="sd" style="background:var(--restau)"></div><span class="sv cr">${tot.restau}</span><span class="sl">restau.</span></div>
+    <div class="sc"><div class="sd" style="background:var(--soir)"></div><span class="sv cs">${tot.apmidi}</span><span class="sl">après-midi</span></div>`;
+}
+
+function renderRecapVac(){
+  const src=recapVacGrp==='plus6'?VAC_PLUS6:VAC_MOINS6;
+  const sorted=[...src].sort((a,b)=>a.nom.localeCompare(b.nom));
+  const grpLabel=recapVacGrp==='plus6'?'+6 ans':'-6 ans';
+  document.getElementById('vac-recap-sub').textContent=`${grpLabel} · ${sorted.length} enfants · ${vacDates.length} jour(s)`;
+  let totM=0,totJ=0,totR=0,totA=0;
+  vacDates.forEach(d=>src.forEach(e=>{const dd=getVacData(e,d);if(dd.matin&&dd.matin!=='ABS')totM++;if(dd.journee&&dd.journee!=='ABS')totJ++;if(dd.restau&&dd.restau!=='ABS')totR++;if(dd.apmidi&&dd.apmidi!=='ABS')totA++;}));
+  document.getElementById('vac-caf-grid').innerHTML=`
+    <div class="caf-card" style="background:var(--matl);border-color:#bfdbfe"><div class="caf-val cm">${totM}</div><div class="caf-lbl">ALSH matin</div></div>
+    <div class="caf-card" style="background:var(--merl);border-color:#a5f3fc"><div class="caf-val cmer">${totJ}</div><div class="caf-lbl">ALSH journée</div></div>
+    <div class="caf-card" style="background:var(--resl);border-color:#bbf7d0"><div class="caf-val cr">${totR}</div><div class="caf-lbl">ALSH restauration</div></div>
+    <div class="caf-card" style="background:var(--soirl);border-color:#ddd6fe"><div class="caf-val cs">${totA}</div><div class="caf-lbl">ALSH après-midi</div></div>`;
+  document.getElementById('vac-recap-dates').innerHTML=vacDates.map(d=>`<th style="color:var(--vac)">${labelVacDate(d)}<br><small style="font-weight:400;color:var(--text3)">M/J/R/A</small></th>`).join('');
+  document.getElementById('vac-recap-tbody').innerHTML=sorted.map(e=>{
+    const cells=vacDates.map(d=>{
+      const dd=getVacData(e,d);
+      const v=[dd.matin||'—',dd.journee||'—',dd.restau||'—',dd.apmidi||'—'].join('·');
+      return`<td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text2)">${v}</td>`;
+    }).join('');
+    return`<tr><td class="nc">${e.nom}</td>${cells}</tr>`;
+  }).join('');
+}
+
+// ============================================================
+// IMPORT JSON
+// ============================================================
+function importPeri(){
+  const raw=document.getElementById('peri-json').value.trim();
+  if(!raw){showToast('JSON vide','err');return;}
+  let p; try{p=JSON.parse(raw);}catch(e){showToast('JSON invalide','err');return;}
+  let nv=0,maj=0;
+  (p.enfants||[]).forEach(imp=>{
+    let ex=PERI.find(e=>e.nom.toLowerCase()===imp.nom.toLowerCase());
+    if(!ex){ex={nom:imp.nom,cl:imp.cl||'?'};PERI.push(ex);nv++;}else maj++;
+    Object.keys(imp).forEach(k=>{if(k==='nom'||k==='cl')return;ex[k]=imp[k];if(!periDates.includes(k))periDates.push(k);});
+  });
+  periDates.sort(); periDate=periDates[periDates.length-1];
+  document.getElementById('peri-json').value='';
+  saveAll(); renderPeriDateTabs(); renderPeriTable();
+  showToast(`"${p.semaine||'Import'}" : ${nv} nouveau(x), ${maj} mis à jour`);
+}
+
+function importMer(){
+  const raw=document.getElementById('mer-json').value.trim();
+  if(!raw){showToast('JSON vide','err');return;}
+  let p; try{p=JSON.parse(raw);}catch(e){showToast('JSON invalide','err');return;}
+  const grp=p.groupe||'moins6';
+  const src=grp==='plus6'?MER_PLUS6:MER_MOINS6;
+  let nv=0,maj=0;
+  (p.enfants||[]).forEach(imp=>{
+    let ex=src.find(e=>e.nom.toLowerCase()===imp.nom.toLowerCase());
+    if(!ex){ex={nom:imp.nom};src.push(ex);nv++;}else maj++;
+    Object.keys(imp).forEach(k=>{if(k==='nom')return;ex[k]=imp[k];if(!merDates.includes(k))merDates.push(k);});
+  });
+  merDates.sort(); merDate=merDates[merDates.length-1]; merGrp=grp;
+  document.getElementById('mer-json').value='';
+  saveAll(); renderMerDateTabs(); renderMerTable();
+  showToast(`"${p.semaine||'Import mercredi'}" : ${nv} nouveau(x), ${maj} mis à jour`);
+}
+
+function importVac(){
+  const raw=document.getElementById('vac-json').value.trim();
+  if(!raw){showToast('JSON vide','err');return;}
+  let p; try{p=JSON.parse(raw);}catch(e){showToast('JSON invalide','err');return;}
+  const grp=p.groupe||'moins6';
+  const src=grp==='plus6'?VAC_PLUS6:VAC_MOINS6;
+  let nv=0,maj=0;
+  (p.enfants||[]).forEach(imp=>{
+    let ex=src.find(e=>e.nom.toLowerCase()===imp.nom.toLowerCase());
+    if(!ex){ex={nom:imp.nom};src.push(ex);nv++;}else maj++;
+    Object.keys(imp).forEach(k=>{if(k==='nom')return;ex[k]=imp[k];if(!vacDates.includes(k))vacDates.push(k);});
+  });
+  vacDates.sort(); vacDate=vacDates[0]; vacGrp=grp;
+  document.getElementById('vac-json').value='';
+  saveAll(); renderVacDateTabs(); renderVacTable();
+  showToast(`"${p.periode||'Import vacances'}" : ${nv} nouveau(x), ${maj} mis à jour`);
+}
+
+// ============================================================
+// MODAL — ajout vac
+// ============================================================
+function openModalAdd(type){
+  _modalCtx={type,nom:''};
+  document.getElementById('modal-title').textContent=type==='peri'?'Ajouter périscolaire':type==='mer'?'Ajouter mercredi':'Ajouter vacances';
+  document.getElementById('modal-nom').value='';
+  document.getElementById('modal-nom-orig').value='';
+  document.getElementById('modal-cl-row').style.display=type==='peri'?'':'none';
+  document.getElementById('modal-grp-row').style.display=type!=='peri'?'':'none';
+  if(type==='mer') document.getElementById('modal-grp').value=merGrp;
+  if(type==='vac') document.getElementById('modal-grp').value=vacGrp;
+  document.getElementById('modal-delete-row').style.display='none';
+  document.getElementById('modal-save-btn').textContent='Ajouter';
+  document.getElementById('modal-bg').classList.add('open');
+}
+
+function openModalEdit(type,nom){
+  _modalCtx={type,nom};
+  document.getElementById('modal-title').textContent='Modifier';
+  document.getElementById('modal-nom').value=nom;
+  document.getElementById('modal-nom-orig').value=nom;
+  if(type==='peri'){
+    const e=PERI.find(x=>x.nom===nom);
+    document.getElementById('modal-cl').value=e?e.cl:'PS';
+    document.getElementById('modal-cl-row').style.display='';
+    document.getElementById('modal-grp-row').style.display='none';
+  } else {
+    document.getElementById('modal-grp').value=type==='mer'?merGrp:vacGrp;
+    document.getElementById('modal-cl-row').style.display='none';
+    document.getElementById('modal-grp-row').style.display='';
+  }
+  document.getElementById('modal-delete-row').style.display='';
+  document.getElementById('modal-save-btn').textContent='Enregistrer';
+  document.getElementById('modal-bg').classList.add('open');
+}
+
+function closeModal(){ document.getElementById('modal-bg').classList.remove('open'); }
+
+function saveModal(){
+  const nom=document.getElementById('modal-nom').value.trim();
+  if(!nom){ showToast('Nom requis','err'); return; }
+  const nomOrig=document.getElementById('modal-nom-orig').value;
+  const type=_modalCtx.type;
+  if(type==='peri'){
+    const cl=document.getElementById('modal-cl').value;
+    if(nomOrig){const e=PERI.find(x=>x.nom===nomOrig);if(e){e.nom=nom;e.cl=cl;}}
+    else PERI.push({nom,cl});
+    saveAll(); renderPeriTable();
+  } else if(type==='mer'){
+    const grp=document.getElementById('modal-grp').value;
+    const src=grp==='plus6'?MER_PLUS6:MER_MOINS6;
+    if(nomOrig){const e=src.find(x=>x.nom===nomOrig);if(e)e.nom=nom;}
+    else src.push({nom});
+    saveAll(); renderMerTable();
+  } else {
+    const grp=document.getElementById('modal-grp').value;
+    const src=grp==='plus6'?VAC_PLUS6:VAC_MOINS6;
+    if(nomOrig){const e=src.find(x=>x.nom===nomOrig);if(e)e.nom=nom;}
+    else src.push({nom});
+    saveAll(); renderVacTable();
+  }
+  closeModal(); showToast(nomOrig?'Modifié':'Ajouté');
+}
+
+function deleteEnfant(){
+  if(!confirm('Supprimer cet enfant ?')) return;
+  const nom=_modalCtx.nom, type=_modalCtx.type;
+  if(type==='peri'){
+    const i=PERI.findIndex(x=>x.nom===nom);if(i>-1)PERI.splice(i,1);
+    saveAll();renderPeriTable();
+  } else if(type==='mer'){
+    [MER_PLUS6,MER_MOINS6].forEach(src=>{const i=src.findIndex(x=>x.nom===nom);if(i>-1)src.splice(i,1);});
+    saveAll();renderMerTable();
+  } else {
+    [VAC_PLUS6,VAC_MOINS6].forEach(src=>{const i=src.findIndex(x=>x.nom===nom);if(i>-1)src.splice(i,1);});
+    saveAll();renderVacTable();
+  }
+  closeModal(); showToast('Supprimé','warn');
+}
+
+// ============================================================
+// PERSISTANCE localStorage
+// ============================================================
+function saveAll(){
+  try{
+    localStorage.setItem('palsh_peri',JSON.stringify(PERI));
+    localStorage.setItem('palsh_mer_plus6',JSON.stringify(MER_PLUS6));
+    localStorage.setItem('palsh_mer_moins6',JSON.stringify(MER_MOINS6));
+    localStorage.setItem('palsh_vac_plus6',JSON.stringify(VAC_PLUS6));
+    localStorage.setItem('palsh_vac_moins6',JSON.stringify(VAC_MOINS6));
+    localStorage.setItem('palsh_peri_dates',JSON.stringify(periDates));
+    localStorage.setItem('palsh_mer_dates',JSON.stringify(merDates));
+    localStorage.setItem('palsh_vac_dates',JSON.stringify(vacDates));
+  }catch(e){}
+}
+function loadAll(){
+  try{
+    const pp=localStorage.getItem('palsh_peri');
+    const mp=localStorage.getItem('palsh_mer_plus6');
+    const mm=localStorage.getItem('palsh_mer_moins6');
+    const vp=localStorage.getItem('palsh_vac_plus6');
+    const vm=localStorage.getItem('palsh_vac_moins6');
+    const pd=localStorage.getItem('palsh_peri_dates');
+    const md=localStorage.getItem('palsh_mer_dates');
+    const vd=localStorage.getItem('palsh_vac_dates');
+    if(pp){PERI.length=0;JSON.parse(pp).forEach(x=>PERI.push(x));}
+    if(mp){MER_PLUS6.length=0;JSON.parse(mp).forEach(x=>MER_PLUS6.push(x));}
+    if(mm){MER_MOINS6.length=0;JSON.parse(mm).forEach(x=>MER_MOINS6.push(x));}
+    if(vp){VAC_PLUS6.length=0;JSON.parse(vp).forEach(x=>VAC_PLUS6.push(x));}
+    if(vm){VAC_MOINS6.length=0;JSON.parse(vm).forEach(x=>VAC_MOINS6.push(x));}
+    if(pd){periDates=JSON.parse(pd);periDate=periDates[periDates.length-1]||periDate;}
+    if(md){merDates=JSON.parse(md);merDate=merDates[merDates.length-1]||merDate;}
+    if(vd){vacDates=JSON.parse(vd);vacDate=vacDates[0]||vacDate;}
+    if(pp||mp||vp) showToast('Données chargées');
+  }catch(e){}
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function showView(v,navEl){
+  document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.ni').forEach(x=>x.classList.remove('act','mact','vact'));
+  document.getElementById('view-'+v).classList.add('active');
+  if(navEl){
+    const cls=v.includes('vac')?'vact':v.includes('mer')?'mact':v==='calendrier'?'cact':'act';
+    navEl.classList.add(cls);
+  }
+  const titles={
+    'periscolaire':'Pointage périscolaire','recap-peri':'Récapitulatif périscolaire',
+    'mercredi':'Mercredi ALSH — Pointage','recap-mer':'Mercredi ALSH — Récapitulatif',
+    'vacances':'Vacances scolaires — Pointage','recap-vac':'Vacances scolaires — Récapitulatif',
+    'calendrier':'Calendrier annuel'
+  };
+  document.getElementById('tb-title').textContent=titles[v]||v;
+  if(v==='recap-peri')renderRecapPeri();
+  if(v==='recap-mer')renderRecapMer();
+  if(v==='recap-vac')renderRecapVac();
+  if(v==='calendrier')renderCal();
+  closeSB();
+}
+function toggleZ(id,chId){
+  const z=document.getElementById(id),open=z.style.display==='none';
+  z.style.display=open?'block':'none';
+  document.getElementById(chId).style.transform=open?'rotate(180deg)':'';
+}
+function openSB(){document.getElementById('sb').classList.add('open');document.getElementById('ov').classList.add('show');}
+function closeSB(){document.getElementById('sb').classList.remove('open');document.getElementById('ov').classList.remove('show');}
+function showToast(msg,type=''){
+  const c=document.getElementById('toasts'),t=document.createElement('div');
+  t.className='toast'+(type?' '+type:'');t.textContent=msg;c.appendChild(t);
+  requestAnimationFrame(()=>t.classList.add('show'));
+  setTimeout(()=>{t.classList.remove('show');setTimeout(()=>t.remove(),300);},2800);
+}
+
+// ============================================================
+// PROMPTS & TOTAUX
+// ============================================================
+const PROMPTS = {
+  peri: `Voici une photo d'une feuille de pointage périscolaire de l'école Deux Moulins.
+Lis tous les noms et les présences pour chaque temps : Matin, Midi (Restauration scolaire), et Soir.
+- ⊕ coloré = présent (true)
+- ○ = absent (false)
+- "ABS" écrit = absent justifié ("abs")
+La feuille a une classe en titre (ex: CE1/CE2, CP, PS...).
+Génère un JSON avec ce format exact :
+{
+  "semaine": "S__ — JJ/MM au JJ/MM/AAAA",
+  "enfants": [
+    {"nom":"NOM Prénom","cl":"CLASSE","JJ/MM":{"m":true,"mi":true,"r":true,"s":false}}
+  ]
+}
+Dates en format JJ/MM (ex: 05/05). Une entrée par jour pour chaque enfant.`,
+
+  mer: `Voici une photo d'une feuille de pointage mercredi ALSH de l'école Deux Moulins.
+Il y a 4 colonnes : ALSH Matin, ALSH Journée, ALSH Restauration, ALSH Après-midi.
+- Une heure écrite = présent ce temps-là, note l'heure telle quelle (ex: "8h30")
+- ○ = absent sur ce temps
+- "ABS" écrit = absent justifié, note "ABS"
+- Une heure barrée = ignore-la, prends la suivante
+Le groupe est indiqué en titre : "+6 ans" → "plus6" / "-6 ans" → "moins6"
+Génère un JSON avec ce format exact :
+{
+  "semaine": "Mercredi JJ/MM/AAAA — ALSH [groupe]",
+  "groupe": "moins6",
+  "enfants": [
+    {"nom":"NOM Prénom","JJ/MM":{"matin":"8h30","journee":"","restau":"17h00","apmidi":""}}
+  ]
+}
+Dates en format JJ/MM. Champ vide ("") si rien n'est noté.`,
+
+  vac: `Voici une photo d'une feuille de pointage vacances ALSH de l'école Deux Moulins.
+Il y a 4 colonnes par jour : ALSH Matin, ALSH Journée, ALSH Restauration, ALSH Après-midi.
+- Une heure écrite = présent ce temps-là, note l'heure telle quelle (ex: "8h30")
+- ○ = absent sur ce temps
+- "ABS" écrit = absent justifié, note "ABS"
+- Une heure barrée = ignore-la, prends la suivante
+Le groupe est indiqué en titre : "+6 ans" → "plus6" / "-6 ans" → "moins6"
+Génère un JSON avec ce format exact :
+{
+  "periode": "Vacances [nom] AAAA",
+  "groupe": "moins6",
+  "enfants": [
+    {"nom":"NOM Prénom","JJ/MM":{"matin":"","journee":"8h00","restau":"17h00","apmidi":""},"JJ/MM":{...}}
+  ]
+}
+Une date par colonne de jour. Dates en format JJ/MM. Champ vide ("") si rien n'est noté.`
+};
+
+function initPrompts(){
+  ['peri','mer','vac'].forEach(t=>{
+    const el=document.getElementById('prompt-'+t);
+    if(el) el.textContent=PROMPTS[t];
+  });
+}
+
+function copyPrompt(type){
+  navigator.clipboard.writeText(PROMPTS[type]).then(()=>showToast('Prompt copié ! Colle-le dans Claude avec ta photo')).catch(()=>showToast('Sélectionne le texte et copie manuellement','warn'));
+}
+
+function renderPeriTfoot(rows, d){
+  const cnt=c=>rows.filter(e=>getPeriVal(e,d,c)===true).length;
+  const m=cnt('m'), mi=cnt('mi'), r=cnt('r'), s=cnt('s');
+  const tf=document.getElementById('peri-tfoot');
+  if(!tf)return;
+  tf.innerHTML=`<tr style="background:var(--surface2);font-weight:600;font-size:13px">
+    <td colspan="2" style="padding:9px 12px">Total — ${rows.length} enfant${rows.length>1?'s':''}</td>
+    <td class="cc cm" style="padding:9px 6px">${m}</td>
+    <td class="cc cmi" style="padding:9px 6px">${mi}</td>
+    <td class="cc cr" style="padding:9px 6px">${r}</td>
+    <td class="cc cs" style="padding:9px 6px">${s}</td>
+    <td></td>
+  </tr>`;
+}
+
+function renderHoraireTfoot(id, rows, d, getData){
+  const tf=document.getElementById(id);
+  if(!tf)return;
+  let m=0,j=0,r=0,a=0;
+  rows.forEach(e=>{const dd=getData(e,d);if(dd.matin&&dd.matin!=='ABS')m++;if(dd.journee&&dd.journee!=='ABS')j++;if(dd.restau&&dd.restau!=='ABS')r++;if(dd.apmidi&&dd.apmidi!=='ABS')a++;});
+  tf.innerHTML=`<tr style="background:var(--surface2);font-weight:600;font-size:13px">
+    <td style="padding:9px 12px">Total — ${rows.length} enfant${rows.length>1?'s':''}</td>
+    <td class="cc cm" style="padding:9px 6px">${m}</td>
+    <td class="cc cmer" style="padding:9px 6px">${j}</td>
+    <td class="cc cr" style="padding:9px 6px">${r}</td>
+    <td class="cc cs" style="padding:9px 6px">${a}</td>
+    <td></td>
+  </tr>`;
+}
+
+// ============================================================
+// CALENDRIER ANNUEL
+// ============================================================
+let calYear = 2026;
+const MOIS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+const DOW_FR = ['L','M','M','J','V','S','D'];
+
+function changeCalYear(d){ calYear+=d; renderCal(); }
+
+function buildDayIndex(){
+  const idx = {};
+  // Périscolaire
+  periDates.forEach(dateStr => {
+    const hasPeri = PERI.some(e => {
+      const dd = e[dateStr];
+      return dd && (dd.m===true||dd.mi===true||dd.r===true||dd.s===true);
+    });
+    if(hasPeri){
+      if(!idx[dateStr]) idx[dateStr]={types:new Set(),peri:0,mer:0,vac:0};
+      idx[dateStr].types.add('peri');
+      idx[dateStr].peri = PERI.filter(e=>e[dateStr]&&(e[dateStr].m===true||e[dateStr].mi===true||e[dateStr].r===true||e[dateStr].s===true)).length;
+    }
+  });
+  // Mercredi
+  merDates.forEach(dateStr => {
+    const hasMer = [...MER_PLUS6,...MER_MOINS6].some(e=>{
+      const dd=e[dateStr];
+      return dd&&(dd.matin||dd.journee||dd.restau||dd.apmidi);
+    });
+    if(hasMer){
+      if(!idx[dateStr]) idx[dateStr]={types:new Set(),peri:0,mer:0,vac:0};
+      idx[dateStr].types.add('mer');
+      idx[dateStr].mer = [...MER_PLUS6,...MER_MOINS6].filter(e=>e[dateStr]&&(e[dateStr].matin||e[dateStr].journee||e[dateStr].restau||e[dateStr].apmidi)).length;
+    }
+  });
+  // Vacances
+  vacDates.forEach(dateStr => {
+    const hasVac = [...VAC_PLUS6,...VAC_MOINS6].some(e=>{
+      const dd=e[dateStr];
+      return dd&&(dd.matin||dd.journee||dd.restau||dd.apmidi);
+    });
+    if(hasVac){
+      if(!idx[dateStr]) idx[dateStr]={types:new Set(),peri:0,mer:0,vac:0};
+      idx[dateStr].types.add('vac');
+      idx[dateStr].vac = [...VAC_PLUS6,...VAC_MOINS6].filter(e=>e[dateStr]&&(e[dateStr].matin||e[dateStr].journee||e[dateStr].restau||e[dateStr].apmidi)).length;
+    }
+  });
+  return idx;
+}
+
+function parseDate(str){ // "JJ/MM" → { d, m } (0-based month)
+  const [d,m]=str.split('/').map(Number);
+  return {d, m:m-1};
+}
+
+function renderCal(){
+  document.getElementById('cal-year-label').textContent=calYear;
+  const idx=buildDayIndex();
+  const today=new Date();
+  const grid=document.getElementById('cal-grid');
+
+  grid.innerHTML=MOIS_FR.map((nomMois, mi)=>{
+    const firstDay=new Date(calYear,mi,1);
+    const lastDay=new Date(calYear,mi+1,0).getDate();
+    // Lundi=0 ... Dimanche=6
+    let startDow=(firstDay.getDay()+6)%7;
+
+    const dowHtml=DOW_FR.map(l=>`<div class="cal-dow-lbl">${l}</div>`).join('');
+
+    let cells='';
+    for(let i=0;i<startDow;i++) cells+=`<div class="cal-day empty"></div>`;
+
+    for(let day=1;day<=lastDay;day++){
+      const dateStr=`${String(day).padStart(2,'0')}/${String(mi+1).padStart(2,'0')}`;
+      const isToday=today.getFullYear()===calYear&&today.getMonth()===mi&&today.getDate()===day;
+      const info=idx[dateStr];
+      let cls='cal-day';
+      if(isToday) cls+=' today';
+      if(info){
+        const types=[...info.types];
+        if(types.length>1) cls+=' multi';
+        else cls+=` ${types[0]}`;
+      } else {
+        cls+=' no-data';
+      }
+      const onclick=info?`showCalPopup(event,'${dateStr}','${nomMois} ${day}')`:'' ;
+      cells+=`<button class="${cls}" ${onclick?`onclick="${onclick}"`:''}>${day}</button>`;
+    }
+
+    return`<div class="cal-month">
+      <div class="cal-month-hd">${nomMois}</div>
+      <div class="cal-month-body">
+        <div class="cal-dow">${dowHtml}</div>
+        <div class="cal-days">${cells}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function showCalPopup(evt, dateStr, label){
+  evt.stopPropagation();
+  const idx=buildDayIndex();
+  const info=idx[dateStr];
+  if(!info) return;
+  const types=[...info.types];
+  let rows='';
+  if(types.includes('peri')){
+    const nb=info.peri;
+    const d=PERI.filter(e=>e[dateStr]);
+    const m=d.filter(e=>e[dateStr]?.m===true).length;
+    const mi=d.filter(e=>e[dateStr]?.mi===true).length;
+    const r=d.filter(e=>e[dateStr]?.r===true).length;
+    const s=d.filter(e=>e[dateStr]?.s===true).length;
+    rows+=`<div style="margin-bottom:8px"><div style="font-size:11px;font-weight:600;color:#1d5fa8;margin-bottom:4px">Périscolaire</div>
+      <div class="cal-popup-row"><span class="cal-popup-lbl">Matin</span><span class="cal-popup-val">${m}</span></div>
+      <div class="cal-popup-row"><span class="cal-popup-lbl">Midi</span><span class="cal-popup-val">${mi}</span></div>
+      <div class="cal-popup-row"><span class="cal-popup-lbl">Restau.</span><span class="cal-popup-val">${r}</span></div>
+      <div class="cal-popup-row"><span class="cal-popup-lbl">Soir</span><span class="cal-popup-val">${s}</span></div>
+    </div>`;
+  }
+  if(types.includes('mer')){
+    const all=[...MER_PLUS6,...MER_MOINS6].filter(e=>e[dateStr]&&(e[dateStr].matin||e[dateStr].journee||e[dateStr].restau||e[dateStr].apmidi));
+    rows+=`<div style="margin-bottom:8px"><div style="font-size:11px;font-weight:600;color:#0e7490;margin-bottom:4px">Mercredi ALSH</div>
+      <div class="cal-popup-row"><span class="cal-popup-lbl">Présents</span><span class="cal-popup-val">${all.length} enfants</span></div>
+      <div class="cal-popup-row"><span class="cal-popup-lbl">-6 ans</span><span class="cal-popup-val">${MER_MOINS6.filter(e=>e[dateStr]&&(e[dateStr].matin||e[dateStr].journee||e[dateStr].restau||e[dateStr].apmidi)).length}</span></div>
+      <div class="cal-popup-row"><span class="cal-popup-lbl">+6 ans</span><span class="cal-popup-val">${MER_PLUS6.filter(e=>e[dateStr]&&(e[dateStr].matin||e[dateStr].journee||e[dateStr].restau||e[dateStr].apmidi)).length}</span></div>
+    </div>`;
+  }
+  if(types.includes('vac')){
+    const all=[...VAC_PLUS6,...VAC_MOINS6].filter(e=>e[dateStr]&&(e[dateStr].matin||e[dateStr].journee||e[dateStr].restau||e[dateStr].apmidi));
+    rows+=`<div><div style="font-size:11px;font-weight:600;color:#7c3aed;margin-bottom:4px">Vacances ALSH</div>
+      <div class="cal-popup-row"><span class="cal-popup-lbl">Présents</span><span class="cal-popup-val">${all.length} enfants</span></div>
+      <div class="cal-popup-row"><span class="cal-popup-lbl">-6 ans</span><span class="cal-popup-val">${VAC_MOINS6.filter(e=>e[dateStr]&&(e[dateStr].matin||e[dateStr].journee||e[dateStr].restau||e[dateStr].apmidi)).length}</span></div>
+      <div class="cal-popup-row"><span class="cal-popup-lbl">+6 ans</span><span class="cal-popup-val">${VAC_PLUS6.filter(e=>e[dateStr]&&(e[dateStr].matin||e[dateStr].journee||e[dateStr].restau||e[dateStr].apmidi)).length}</span></div>
+    </div>`;
+  }
+  const popup=document.getElementById('cal-popup');
+  popup.innerHTML=`<div class="cal-popup-t">${label} ${calYear}</div>${rows}<div style="font-size:11px;color:var(--text3);margin-top:8px;cursor:pointer">Clic pour fermer</div>`;
+  // Position
+  const r=evt.target.getBoundingClientRect();
+  popup.style.display='block';
+  let left=r.right+8;
+  let top=r.top;
+  if(left+280>window.innerWidth) left=r.left-288;
+  if(top+popup.offsetHeight>window.innerHeight) top=window.innerHeight-popup.offsetHeight-10;
+  popup.style.left=left+'px';
+  popup.style.top=top+'px';
+}
+
+function closeCalPopup(){
+  document.getElementById('cal-popup').style.display='none';
+}
+
+// INIT
+let _modalCtx={type:'',nom:''};
+
+// ============================================================
+// SUPABASE
+// ============================================================
+const SUPA_URL = 'https://mqprjpqumofnddvbifwj.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xcHJqcHF1bW9mbmRkdmJpZndqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczNzc2MzMsImV4cCI6MjA5Mjk1MzYzM30.5Zy8esQVIyQOUBrkqe57XzsNk_T7eRMX1GaQlBzb-0w';
+
+const supa = {
+  async req(path, opts={}){
+    const r = await fetch(SUPA_URL+'/rest/v1/'+path, {
+      headers: {
+        'apikey': SUPA_KEY,
+        'Authorization': 'Bearer '+SUPA_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': opts.prefer||'',
+        ...opts.headers
+      },
+      method: opts.method||'GET',
+      body: opts.body ? JSON.stringify(opts.body) : undefined
+    });
+    if(!r.ok){ console.error('Supabase error', r.status, await r.text()); return null; }
+    const txt = await r.text();
+    return txt ? JSON.parse(txt) : null;
+  },
+  async get(table, params='')   { return this.req(table+(params?'?'+params:'')); },
+  async upsert(table, data)     { return this.req(table, {method:'POST', prefer:'resolution=merge-duplicates,return=minimal', body: data}); },
+  async del(table, params)      { return this.req(table+'?'+params, {method:'DELETE'}); }
+};
+
+// ---- SYNC SUPABASE ----
+async function syncToSupabase(){
+  showToast('Synchronisation…');
+  try {
+    // --- ENFANTS PERI ---
+    const periRows = PERI.map(e => ({nom:e.nom, classe:e.cl, actif:true}));
+    await supa.upsert('enfants_peri?on_conflict=nom,classe', periRows);
+
+    // Recharger les IDs
+    const dbPeri = await supa.get('enfants_peri', 'select=id,nom,classe');
+    const periIdx = {}; (dbPeri||[]).forEach(r => periIdx[r.nom+'|'+r.classe] = r.id);
+
+    // --- POINTAGES PERI ---
+    const ptRows = [];
+    PERI.forEach(e => {
+      const eid = periIdx[e.nom+'|'+e.cl];
+      if(!eid) return;
+      periDates.forEach(dateStr => {
+        const d = e[dateStr]; if(!d) return;
+        ptRows.push({
+          enfant_id: eid,
+          date: dateStr,
+          annee: calYear,
+          matin: d.m===true, midi: d.mi===true, restau: d.r===true, soir: d.s===true,
+          matin_abs: d.m==='abs', midi_abs: d.mi==='abs', restau_abs: d.r==='abs', soir_abs: d.s==='abs'
+        });
+      });
+    });
+    if(ptRows.length) await supa.upsert('pointages_peri?on_conflict=enfant_id,date,annee', ptRows);
+
+    // --- ENFANTS MERCREDI ---
+    const merRows = [
+      ...MER_MOINS6.map(e => ({nom:e.nom, groupe:'moins6', actif:true})),
+      ...MER_PLUS6.map(e => ({nom:e.nom, groupe:'plus6', actif:true}))
+    ];
+    await supa.upsert('enfants_mer?on_conflict=nom,groupe', merRows);
+    const dbMer = await supa.get('enfants_mer', 'select=id,nom,groupe');
+    const merIdx = {}; (dbMer||[]).forEach(r => merIdx[r.nom+'|'+r.groupe] = r.id);
+
+    // --- POINTAGES MER ---
+    const merPtRows = [];
+    [...MER_MOINS6.map(e=>({...e,grp:'moins6'})),...MER_PLUS6.map(e=>({...e,grp:'plus6'}))].forEach(e => {
+      const eid = merIdx[e.nom+'|'+e.grp]; if(!eid) return;
+      merDates.forEach(dateStr => {
+        const d = e[dateStr]; if(!d) return;
+        merPtRows.push({enfant_id:eid, date:dateStr, annee:calYear, matin:d.matin||'', journee:d.journee||'', restau:d.restau||'', apmidi:d.apmidi||''});
+      });
+    });
+    if(merPtRows.length) await supa.upsert('pointages_mer?on_conflict=enfant_id,date,annee', merPtRows);
+
+    // --- ENFANTS VACANCES ---
+    const vacRows = [
+      ...VAC_MOINS6.map(e => ({nom:e.nom, groupe:'moins6', actif:true})),
+      ...VAC_PLUS6.map(e => ({nom:e.nom, groupe:'plus6', actif:true}))
+    ];
+    await supa.upsert('enfants_vac?on_conflict=nom,groupe', vacRows);
+    const dbVac = await supa.get('enfants_vac', 'select=id,nom,groupe');
+    const vacIdx = {}; (dbVac||[]).forEach(r => vacIdx[r.nom+'|'+r.groupe] = r.id);
+
+    // --- POINTAGES VAC ---
+    const vacPtRows = [];
+    [...VAC_MOINS6.map(e=>({...e,grp:'moins6'})),...VAC_PLUS6.map(e=>({...e,grp:'plus6'}))].forEach(e => {
+      const eid = vacIdx[e.nom+'|'+e.grp]; if(!eid) return;
+      vacDates.forEach(dateStr => {
+        const d = e[dateStr]; if(!d) return;
+        vacPtRows.push({enfant_id:eid, date:dateStr, annee:calYear, matin:d.matin||'', journee:d.journee||'', restau:d.restau||'', apmidi:d.apmidi||''});
+      });
+    });
+    if(vacPtRows.length) await supa.upsert('pointages_vac?on_conflict=enfant_id,date,annee', vacPtRows);
+
+    showToast('Synchronisé avec Supabase !');
+    saveAll(); // garde aussi le localStorage comme cache
+  } catch(err) {
+    console.error(err);
+    showToast('Erreur de synchronisation','err');
+  }
+}
+
+async function loadFromSupabase(){
+  showToast('Chargement depuis Supabase…');
+  try {
+    // PERI
+    const ep = await supa.get('enfants_peri', 'select=id,nom,classe,actif&actif=eq.true');
+    const pp = await supa.get('pointages_peri', 'select=enfant_id,date,annee,matin,midi,restau,soir,matin_abs,restau_abs,soir_abs');
+    if(ep && ep.length){
+      PERI.length=0;
+      const ptByEnfant = {};
+      (pp||[]).forEach(p => { if(!ptByEnfant[p.enfant_id]) ptByEnfant[p.enfant_id]=[]; ptByEnfant[p.enfant_id].push(p); });
+      ep.forEach(e => {
+        const obj = {nom:e.nom, cl:e.classe};
+        (ptByEnfant[e.id]||[]).forEach(p => {
+          obj[p.date] = {
+            m: p.matin_abs?'abs':p.matin, mi: p.midi, r: p.restau_abs?'abs':p.restau, s: p.soir_abs?'abs':p.soir
+          };
+          if(!periDates.includes(p.date)) periDates.push(p.date);
+        });
+        PERI.push(obj);
+      });
+      periDates.sort();
+      periDate = periDates[periDates.length-1]||periDate;
+    }
+
+    // MER
+    const em = await supa.get('enfants_mer', 'select=id,nom,groupe&actif=eq.true');
+    const pm = await supa.get('pointages_mer', 'select=enfant_id,date,annee,matin,journee,restau,apmidi');
+    if(em && em.length){
+      MER_MOINS6.length=0; MER_PLUS6.length=0;
+      const mtByE = {};
+      (pm||[]).forEach(p => { if(!mtByE[p.enfant_id]) mtByE[p.enfant_id]=[]; mtByE[p.enfant_id].push(p); });
+      em.forEach(e => {
+        const obj = {nom:e.nom};
+        (mtByE[e.id]||[]).forEach(p => {
+          obj[p.date]={matin:p.matin,journee:p.journee,restau:p.restau,apmidi:p.apmidi};
+          if(!merDates.includes(p.date)) merDates.push(p.date);
+        });
+        (e.groupe==='moins6'?MER_MOINS6:MER_PLUS6).push(obj);
+      });
+      merDates.sort();
+      merDate = merDates[merDates.length-1]||merDate;
+    }
+
+    // VAC
+    const ev = await supa.get('enfants_vac', 'select=id,nom,groupe&actif=eq.true');
+    const pv = await supa.get('pointages_vac', 'select=enfant_id,date,annee,matin,journee,restau,apmidi');
+    if(ev && ev.length){
+      VAC_MOINS6.length=0; VAC_PLUS6.length=0;
+      const vtByE = {};
+      (pv||[]).forEach(p => { if(!vtByE[p.enfant_id]) vtByE[p.enfant_id]=[]; vtByE[p.enfant_id].push(p); });
+      ev.forEach(e => {
+        const obj = {nom:e.nom};
+        (vtByE[e.id]||[]).forEach(p => {
+          obj[p.date]={matin:p.matin,journee:p.journee,restau:p.restau,apmidi:p.apmidi};
+          if(!vacDates.includes(p.date)) vacDates.push(p.date);
+        });
+        (e.groupe==='moins6'?VAC_MOINS6:VAC_PLUS6).push(obj);
+      });
+      vacDates.sort();
+      vacDate = vacDates[0]||vacDate;
+    }
+
+    showToast('Données chargées depuis Supabase !');
+    renderPeriDateTabs(); renderMerDateTabs(); renderVacDateTabs();
+    renderPeriTable();
+    saveAll();
+  } catch(err){
+    console.error(err);
+    showToast('Erreur chargement Supabase, données locales utilisées','warn');
+    loadAll();
+  }
+}
+
+// Bouton sync dans la topbar
+document.getElementById('tb-title').insertAdjacentHTML('afterend',
+  `<button onclick="syncToSupabase()" class="btn btn-p btn-sm" style="font-size:11px;padding:4px 10px;gap:4px">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+    Sync Supabase
+  </button>`
+);
+
+document.addEventListener('click', e => {
+  const p=document.getElementById('cal-popup');
+  if(p&&!p.contains(e.target)&&!e.target.classList.contains('cal-day')) p.style.display='none';
+});
+
+// Chargement : Supabase en priorité, localStorage en fallback
+loadFromSupabase().then(() => {
+  renderPeriDateTabs(); renderMerDateTabs(); renderVacDateTabs();
+  renderPeriTable(); initPrompts();
+});
+</script>
+</body>
+</html>
