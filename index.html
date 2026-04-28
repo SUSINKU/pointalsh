@@ -1742,11 +1742,17 @@ document.addEventListener('click', e => {
   if(p&&!p.contains(e.target)&&!e.target.classList.contains('cal-day')) p.style.display='none';
 });
 
-// Chargement : Supabase en priorité, localStorage en fallback
-loadFromSupabase().then(() => {
-  renderPeriDateTabs(); renderMerDateTabs(); renderVacDateTabs();
-  renderPeriTable(); initPrompts();
-});
+// INIT : localStorage d'abord (immédiat) puis Supabase en arrière-plan
+loadAll(); // données locales → interface réactive immédiatement
+renderPeriDateTabs(); renderMerDateTabs(); renderVacDateTabs();
+renderPeriTable(); initPrompts();
+
+// Supabase en arrière-plan sans bloquer
+setTimeout(() => {
+  loadFromSupabase().catch(err => {
+    console.warn('Supabase indisponible, données locales utilisées');
+  });
+}, 100);
 </script>
 </body>
 </html>
