@@ -977,3 +977,8 @@ document.addEventListener('click',function(e){
 loadAll();
 renderPeriDateTabs();renderMerDateTabs();renderVacDateTabs();renderPeriTable();initPrompts();
 setTimeout(function(){loadFromSupabase();},200);
+
+// Rechargement automatique depuis Supabase toutes les 30 secondes
+setInterval(function(){
+  loadFromSupabase();
+},30000);
