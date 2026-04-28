@@ -701,6 +701,7 @@ function showSyncIndicator(state){
 }
 
 async function syncToSupabase(){
+  console.log('Sync Supabase démarrage...');
   try{
     var periRows=PERI.map(function(e){return {nom:e.nom,classe:e.cl,actif:true};});
     await supa.upsert('enfants_peri?on_conflict=nom,classe',periRows);
@@ -743,10 +744,12 @@ async function syncToSupabase(){
       vacDates.forEach(function(dateStr){var d=e[dateStr];if(!d)return;vacPtRows.push({enfant_id:eid,date:dateStr,annee:calYear,matin:d.matin||'',journee:d.journee||'',restau:d.restau||'',apmidi:d.apmidi||''});});
     });
     if(vacPtRows.length)await supa.upsert('pointages_vac?on_conflict=enfant_id,date,annee',vacPtRows);
-  }catch(err){console.error(err);}
+    console.log('Sync OK - peri:'+ptRows.length+' mer:'+merPtRows.length+' vac:'+vacPtRows.length);
+  }catch(err){console.error('Sync ERREUR:',err);showToast('Erreur sync: '+err.message,'err');}
 }
 
 async function loadFromSupabase(){
+  console.log('Chargement depuis Supabase...');
   try{
     var ep=await supa.get('enfants_peri','select=id,nom,classe,actif&actif=eq.true');
     var pp=await supa.get('pointages_peri','select=enfant_id,date,annee,matin,midi,restau,soir,matin_abs,restau_abs,soir_abs');
@@ -976,7 +979,13 @@ document.addEventListener('click',function(e){
 });
 loadAll();
 renderPeriDateTabs();renderMerDateTabs();renderVacDateTabs();renderPeriTable();initPrompts();
-setTimeout(function(){loadFromSupabase();},200);
+setTimeout(function(){
+  loadFromSupabase().then(function(){
+    // Après chargement Supabase, re-sync pour s'assurer que tout est envoyé
+    console.log('Supabase chargé, sync en cours...');
+    syncToSupabase();
+  });
+},200);
 
 // Rechargement automatique depuis Supabase toutes les 30 secondes
 setInterval(function(){
