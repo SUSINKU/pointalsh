@@ -315,6 +315,7 @@ tbody tr:hover td{background:#faf9f7;}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
     </button>
     <div class="tb-title" id="tb-title">Pointage périscolaire</div>
+    <span id="sync-indicator" style="font-size:11px;font-weight:500;opacity:0;transition:opacity .3s;min-width:90px;text-align:right"></span>
   </div>
 
   <div class="pc">
@@ -879,7 +880,7 @@ function renderMerTable(filter=''){
   const mkH=(val,champ,nom)=>{
     const v=val||'';
     const safe=nom.replace(/'/g,"\\'");
-    return`<td class="cc"><input class="h-inp${v?' v':''}" value="${v}" placeholder="—" onchange="updateMerField('${safe}','${d}','${champ}',this.value)" onblur="saveAll()"></td>`;
+    return`<td class="cc"><input class="h-inp${v?' v':''}" value="${v}" placeholder="—" onchange="updateMerField('${safe}','${d}','${champ}',this.value)" onblur="autoSync()"></td>`;
   };
   document.getElementById('mer-tbody').innerHTML=rows.map(e=>{
     const dd=getMerData(e,d);
@@ -968,22 +969,23 @@ function cyclePeri(nom,date,champ,btn){
   const cur=e[date][champ];
   const next=cur===false?true:cur===true?'abs':false;
   e[date][champ]=next;
-  // Mise à jour visuelle directe sans re-render complet
   const cls=champ==='m'?'m':champ==='mi'?'mi':champ==='r'?'r':'s';
   btn.className='tri'+(next===true?` pres ${cls}`:next==='abs'?' abs':'');
   btn.textContent=next===true?'✓':next==='abs'?'ABS':'';
   renderPeriStats();
-  saveAll();
+  autoSync();
 }
 function updateMerField(nom,date,champ,val){
   const src=currentMerData();
   const e=src.find(x=>x.nom.toLowerCase()===nom.toLowerCase());
   if(e){if(!e[date])e[date]={matin:'',journee:'',restau:'',apmidi:''};e[date][champ]=val;}
+  autoSync();
 }
 function updateVacField(nom,date,champ,val){
   const src=currentVacData();
   const e=src.find(x=>x.nom.toLowerCase()===nom.toLowerCase());
   if(e){if(!e[date])e[date]={matin:'',journee:'',restau:'',apmidi:''};e[date][champ]=val;}
+  autoSync();
 }
 function selectPeriDate(d,el){periDate=d;document.querySelectorAll('#peri-date-tabs .dt').forEach(t=>t.classList.remove('act'));el.classList.add('act');renderPeriTable();}
 function selectMerDate(d,el){merDate=d;document.querySelectorAll('#mer-date-tabs .dt').forEach(t=>t.classList.remove('act'));el.classList.add('act');renderMerTable();}
@@ -997,9 +999,9 @@ function jumpClass(cl){periClass=cl;showView('periscolaire',document.getElementB
 function searchPeri(q){renderPeriTable(q);}
 function searchMer(q){renderMerTable(q);}
 function searchVac(q){renderVacTable(q);}
-function savePeri(){saveAll();showToast('Pointage enregistré');}
-function saveMer(){saveAll();showToast('Mercredi enregistré');}
-function saveVac(){saveAll();showToast('Vacances enregistrées');}
+function savePeri(){autoSync();showToast('Pointage enregistré');}
+function saveMer(){autoSync();showToast('Mercredi enregistré');}
+function saveVac(){autoSync();showToast('Vacances enregistrées');}
 function exportCAF(){showToast('Export CAF — à connecter au backend','warn');}
 
 // ============================================================
@@ -1018,7 +1020,7 @@ function renderVacTable(filter=''){
   const mkH=(val,champ,nom)=>{
     const v=val||'';
     const safe=nom.replace(/'/g,"\\'");
-    return`<td class="cc"><input class="h-inp${v?' v':''}" value="${v}" placeholder="—" onchange="updateVacField('${safe}','${d}','${champ}',this.value)" onblur="saveAll()"></td>`;
+    return`<td class="cc"><input class="h-inp${v?' v':''}" value="${v}" placeholder="—" onchange="updateVacField('${safe}','${d}','${champ}',this.value)" onblur="autoSync()"></td>`;
   };
   document.getElementById('vac-tbody').innerHTML=rows.map(e=>{
     const dd=getVacData(e,d);
@@ -1219,7 +1221,32 @@ function saveAll(){
     localStorage.setItem('palsh_vac_dates',JSON.stringify(vacDates));
   }catch(e){}
 }
-function loadAll(){
+
+// Auto-sync Supabase avec debounce 1.5s
+let _syncTimer = null;
+let _syncPending = false;
+function autoSync(){
+  saveAll(); // localStorage immédiat
+  _syncPending = true;
+  showSyncIndicator('en attente');
+  clearTimeout(_syncTimer);
+  _syncTimer = setTimeout(async ()=>{
+    showSyncIndicator('sync…');
+    await syncToSupabase();
+    _syncPending = false;
+    showSyncIndicator('ok');
+    setTimeout(()=>showSyncIndicator(''), 2000);
+  }, 1500);
+}
+
+function showSyncIndicator(state){
+  let el = document.getElementById('sync-indicator');
+  if(!el) return;
+  if(!state){ el.style.opacity='0'; return; }
+  el.style.opacity='1';
+  el.textContent = state==='ok'?'✓ Sauvegardé':state==='sync…'?'↑ Sync…':'● En attente';
+  el.style.color = state==='ok'?'var(--accent)':state==='sync…'?'var(--matin)':'var(--warn)';
+}
   try{
     const pp=localStorage.getItem('palsh_peri');
     const mp=localStorage.getItem('palsh_mer_plus6');
@@ -1709,14 +1736,7 @@ async function loadFromSupabase(){
   }
 }
 
-// Bouton sync dans la topbar
-document.getElementById('tb-title').insertAdjacentHTML('afterend',
-  `<button onclick="syncToSupabase()" class="btn btn-p btn-sm" style="font-size:11px;padding:4px 10px;gap:4px">
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
-    Sync Supabase
-  </button>`
-);
-
+// Sync auto — le bouton manuel est remplacé par l'indicateur automatique
 document.addEventListener('click', e => {
   const p=document.getElementById('cal-popup');
   if(p&&!p.contains(e.target)&&!e.target.classList.contains('cal-day')) p.style.display='none';
